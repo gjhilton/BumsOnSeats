@@ -1,0 +1,45 @@
+{
+  "name": "bumsonseats",
+  "version": "1.0.0",
+  "description": "D3 visualization website for performance data",
+  "type": "module",
+  "scripts": {
+    "dev": "panda codegen --config config/panda.config.mjs && vite --config config/vite.config.js --host",
+    "dev:local": "panda codegen --config config/panda.config.mjs && vite --config config/vite.config.js",
+    "build": "panda codegen --config config/panda.config.mjs && vite build --config config/vite.config.js",
+    "preview": "vite preview --config config/vite.config.js",
+    "prepare": "panda codegen --config config/panda.config.mjs",
+    "lint": "eslint . --config config/eslint.config.js",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gjhilton/BumsOnSeats.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gjhilton/BumsOnSeats/issues"
+  },
+  "homepage": "https://github.com/gjhilton/BumsOnSeats#readme",
+  "dependencies": {
+    "@tanstack/react-router": "^1.141.2",
+    "d3": "^7.9.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@pandacss/dev": "^1.7.1",
+    "@tanstack/router-plugin": "^1.141.2",
+    "@vitejs/plugin-react": "^5.1.2",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.25",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.7.4",
+    "vite": "^7.2.7"
+  }
+}
