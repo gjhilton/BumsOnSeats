@@ -4,9 +4,9 @@
   "description": "D3 visualization website for performance data",
   "type": "module",
   "scripts": {
-    "dev": "panda codegen --config config/panda.config.mjs && vite --config config/vite.config.js --host",
-    "dev:local": "panda codegen --config config/panda.config.mjs && vite --config config/vite.config.js",
-    "build": "panda codegen --config config/panda.config.mjs && vite build --config config/vite.config.js",
+    "dev": "panda codegen --config config/panda.config.mjs && panda cssgen --config config/panda.config.mjs --outfile styled-system/styles.css --watch & vite --config config/vite.config.js --host",
+    "dev:local": "panda codegen --config config/panda.config.mjs && panda cssgen --config config/panda.config.mjs --outfile styled-system/styles.css --watch & vite --config config/vite.config.js",
+    "build": "panda codegen --config config/panda.config.mjs && panda cssgen --config config/panda.config.mjs --outfile styled-system/styles.css && vite build --config config/vite.config.js",
     "preview": "vite preview --config config/vite.config.js",
     "prepare": "panda codegen --config config/panda.config.mjs",
     "lint": "eslint . --config config/eslint.config.js",

@@ -19,25 +19,15 @@ function Performances() {
 
     return (
         <div>
-            <h1
-                className={css({
-                    fontSize: '2.5rem',
-                    marginBottom: 'lg',
-                    color: 'text',
-                })}
-            >
+            <h1 className={css({ fontSize: 'xlarge', mb: 'lg', color: 'text', fontWeight: 'normal', lineHeight: '1.1' })}>
                 Performance Data
             </h1>
-            <p
-                className={css({
-                    fontSize: '1.125rem',
-                    marginBottom: 'xl',
-                    color: 'gray.600',
-                })}
-            >
+            <p className={css({ fontSize: 'medium', mb: 'xl', color: 'text', lineHeight: '1.5' })}>
                 Monthly performance metrics visualized with D3.js
             </p>
-            <D3Chart data={sampleData} width={800} height={400} />
+            <div className={css({ mt: '2xl' })}>
+                <D3Chart data={sampleData} width={800} height={400} />
+            </div>
         </div>
     )
 }

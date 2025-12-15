@@ -47,7 +47,7 @@ export function D3Chart({ data, width = 800, height = 400 }) {
             .attr('y', (d) => yScale(d.value))
             .attr('width', xScale.bandwidth())
             .attr('height', (d) => innerHeight - yScale(d.value))
-            .attr('fill', '#3b82f6')
+            .attr('fill', '#32373c')
             .attr('rx', 4)
 
         // Add x-axis
