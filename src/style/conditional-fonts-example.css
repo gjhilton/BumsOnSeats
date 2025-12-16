@@ -1,0 +1,85 @@
+/*
+ * Conditional Font Styling Examples
+ *
+ * The html element will have data-font-source="typekit" or data-font-source="local"
+ * depending on whether Typekit loaded successfully.
+ *
+ * Use these selectors to apply different styles based on the font source.
+ */
+
+/* Example 1: Adjust letter spacing for local fonts */
+html[data-font-source="local"] h1 {
+    letter-spacing: 0.02em; /* Libre Caslon might need different spacing */
+}
+
+/* Example 2: Adjust font weight mapping */
+html[data-font-source="local"] .bold-text {
+    font-weight: 700; /* Libre Caslon uses standard weights */
+}
+
+html[data-font-source="typekit"] .bold-text {
+    font-weight: 600; /* Adobe Caslon might look better at 600 */
+}
+
+/* Example 3: Adjust line height for better readability */
+html[data-font-source="local"] .body-text {
+    line-height: 1.7; /* Libre Caslon might need more line height */
+}
+
+html[data-font-source="typekit"] .body-text {
+    line-height: 1.6;
+}
+
+/* Example 4: Adjust font size slightly */
+html[data-font-source="local"] .headline {
+    font-size: 102%; /* Libre Caslon might render slightly smaller */
+}
+
+/* Example 5: Using CSS custom properties for fine-tuning */
+:root {
+    --caslon-letter-spacing: 0.05em;
+    --caslon-line-height: 1.6;
+    --caslon-weight-normal: 400;
+    --caslon-weight-bold: 600;
+}
+
+html[data-font-source="local"] {
+    --caslon-letter-spacing: 0.03em;
+    --caslon-line-height: 1.7;
+    --caslon-weight-normal: 400;
+    --caslon-weight-bold: 700;
+}
+
+/* Then use these variables in your components */
+.styled-text {
+    letter-spacing: var(--caslon-letter-spacing);
+    line-height: var(--caslon-line-height);
+    font-weight: var(--caslon-weight-normal);
+}
+
+/* Example 6: JavaScript detection */
+/*
+ * In your JavaScript/React code:
+ *
+ * const fontSource = document.documentElement.getAttribute('data-font-source');
+ * if (fontSource === 'local') {
+ *     // Apply local font adjustments
+ * }
+ *
+ * Or use a React hook:
+ *
+ * const [fontSource, setFontSource] = useState('typekit');
+ *
+ * useEffect(() => {
+ *     const observer = new MutationObserver(() => {
+ *         setFontSource(document.documentElement.getAttribute('data-font-source'));
+ *     });
+ *
+ *     observer.observe(document.documentElement, {
+ *         attributes: true,
+ *         attributeFilter: ['data-font-source']
+ *     });
+ *
+ *     return () => observer.disconnect();
+ * }, []);
+ */

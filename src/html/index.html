@@ -1,8 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-font-source="typekit">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://use.typekit.net/brq3nlt.css">
+        <script>
+            // Detect if Typekit loaded successfully
+            (function() {
+                var timeout = setTimeout(function() {
+                    // If Typekit hasn't loaded after 3 seconds, switch to local fonts
+                    document.documentElement.setAttribute('data-font-source', 'local');
+                    console.warn('Typekit fonts failed to load, using local fallback');
+                }, 3000);
+
+                // Check if adobe-caslon-pro is available
+                document.fonts.ready.then(function() {
+                    var hasAdobeCaslon = false;
+                    document.fonts.forEach(function(font) {
+                        if (font.family.toLowerCase().includes('adobe-caslon')) {
+                            hasAdobeCaslon = true;
+                        }
+                    });
+
+                    if (hasAdobeCaslon) {
+                        clearTimeout(timeout);
+                        document.documentElement.setAttribute('data-font-source', 'typekit');
+                        console.log('Typekit fonts loaded successfully');
+                    } else {
+                        clearTimeout(timeout);
+                        document.documentElement.setAttribute('data-font-source', 'local');
+                        console.warn('Adobe Caslon not found, using local fallback');
+                    }
+                });
+
+                // Also handle network errors on the stylesheet
+                var typekitLink = document.querySelector('link[href*="typekit"]');
+                if (typekitLink) {
+                    typekitLink.onerror = function() {
+                        clearTimeout(timeout);
+                        document.documentElement.setAttribute('data-font-source', 'local');
+                        console.error('Typekit stylesheet failed to load, using local fallback');
+                    };
+                }
+            })();
+        </script>
         <title>Bums On Seats</title>
     </head>
     <body>

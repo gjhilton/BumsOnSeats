@@ -5,6 +5,9 @@ import { Footer } from '@components/Footer/Footer'
 
 export function Layout({ children }) {
     return (
+        <div
+        className={css({ padding: "2rem"})}
+        >
         <div className={css({ minHeight: '100vh', display: 'flex', flexDirection: 'column' })}>
             <nav className={css({ bg: 'background', borderBottom: '1px solid #abb8c3', py: 'lg', px: '0' })}>
                 <div className={css({ maxWidth: '1200px', margin: '0 auto', px: 'xl', display: 'flex', gap: '2xl', alignItems: 'center' })}>
@@ -24,6 +27,7 @@ export function Layout({ children }) {
                     <Footer />
                 </div>
             </footer>
+        </div>
         </div>
     )
 }
