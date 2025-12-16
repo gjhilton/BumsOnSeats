@@ -35,6 +35,7 @@ const CHART_MARGINS = {
 
 const ASTERISK_FONT_SIZE = "9px";
 const ASTERISK_OPACITY = 0.6;
+const LEGEND_FONT_SIZE = "14px";
 
 function prepareDotsWithOffsets(data) {
   const groups = d3.group(data, d => `${d.year}-${d.dayOfYear}`);
@@ -254,7 +255,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
               gap: "0.5rem",
               cursor: "pointer",
               position: "relative",
-              fontSize: "14px",
+              fontSize: LEGEND_FONT_SIZE,
               padding: "0 0.6rem",
               borderRadius: "40px",
               height: "28px",
@@ -317,7 +318,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
           marginBottom: "2rem",
           marginLeft: `${CHART_MARGINS.left}px`,
           alignItems: "center",
-          fontSize: "12px",
+          fontSize: LEGEND_FONT_SIZE,
         })}
       >
         <div
@@ -370,7 +371,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
         >
           <span
             className={css({
-              fontSize: "14px",
+              fontSize: LEGEND_FONT_SIZE,
               fontWeight: "600",
             })}
           >

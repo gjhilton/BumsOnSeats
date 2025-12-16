@@ -93,7 +93,7 @@ function Performances() {
     <div>
       <h1
         className={css({
-          fontSize: "xlarge",
+          fontSize: "large",
           mb: "lg",
           color: "text",
           fontWeight: "normal",
@@ -102,9 +102,9 @@ function Performances() {
           marginRight: "100px",
         })}
       >
-        Performance Calendar (1732-1809)
+        Calendar of Performances &amp; Receipts (1732-1809)
       </h1>
-      <p
+     {/* <p
         className={css({
           fontSize: "medium",
           mb: "xl",
@@ -115,7 +115,7 @@ function Performances() {
         })}
       >
         {data.length} performances visualized across 77 years
-      </p>
+      </p> */}
       <div className={css({ mt: "2xl" })}>
         <CalendarOfPerformances data={data} height={1560} />
       </div>
