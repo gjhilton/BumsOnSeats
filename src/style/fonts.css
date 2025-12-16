@@ -1,36 +1,36 @@
 /* Libre Caslon Text - Local Fallback Font */
 
 @font-face {
-    font-family: 'Libre Caslon Text';
-    src: url('../assets/fonts/LibreCaslonText-Regular.woff2') format('woff2');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
+  font-family: "Libre Caslon Text";
+  src: url("../assets/fonts/LibreCaslonText-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Libre Caslon Text';
-    src: url('../assets/fonts/LibreCaslonText-Italic.woff2') format('woff2');
-    font-weight: 400;
-    font-style: italic;
-    font-display: swap;
+  font-family: "Libre Caslon Text";
+  src: url("../assets/fonts/LibreCaslonText-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Libre Caslon Text';
-    src: url('../assets/fonts/LibreCaslonText-Bold.woff2') format('woff2');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: "Libre Caslon Text";
+  src: url("../assets/fonts/LibreCaslonText-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* Font fallback configuration */
 :root {
-    --font-caslon: "adobe-caslon-pro", "Libre Caslon Text", Georgia, serif;
-    --font-caslon-fallback: "Libre Caslon Text", Georgia, serif;
+  --font-caslon: "adobe-caslon-pro", "Libre Caslon Text", Georgia, serif;
+  --font-caslon-fallback: "Libre Caslon Text", Georgia, serif;
 }
 
 /* When Typekit fails to load, apply fallback font */
 html[data-font-source="local"] {
-    --font-caslon: var(--font-caslon-fallback);
+  --font-caslon: var(--font-caslon-fallback);
 }

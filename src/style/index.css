@@ -1,24 +1,24 @@
 @layer reset, base, tokens, recipes, utilities;
 
-@import './fonts.css';
+@import "./fonts.css";
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: #ffffff;
-    color: #000000;
-    font-size: 16px;
-    line-height: 1.6;
-    margin: 0;
-    padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
 }
 
 a {
-    color: #000000;
-    text-decoration: underline;
+  color: #000000;
+  text-decoration: underline;
 }
 
 a:hover {
-    text-decoration: none;
+  text-decoration: none;
 }
