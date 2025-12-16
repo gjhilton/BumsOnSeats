@@ -98,6 +98,8 @@ function Performances() {
           color: "text",
           fontWeight: "normal",
           lineHeight: "1.1",
+          marginLeft: "80px",
+          marginRight: "100px",
         })}
       >
         Theatrical Performance Calendar (1732-1809)
@@ -108,12 +110,14 @@ function Performances() {
           mb: "xl",
           color: "text",
           lineHeight: "1.5",
+          marginLeft: "80px",
+          marginRight: "100px",
         })}
       >
         {data.length} performances visualized across 77 years
       </p>
       <div className={css({ mt: "2xl" })}>
-        <D3Chart data={data} width={1200} height={1560} />
+        <D3Chart data={data} height={1560} />
       </div>
     </div>
   );
