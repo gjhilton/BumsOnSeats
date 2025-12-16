@@ -35,7 +35,7 @@ const CHART_MARGINS = {
 
 const ASTERISK_FONT_SIZE = "9px";
 const ASTERISK_OPACITY = 0.6;
-const LEGEND_FONT_SIZE = "14px";
+const LEGEND_FONT_SIZE = "16px";
 
 function prepareDotsWithOffsets(data) {
   const groups = d3.group(data, d => `${d.year}-${d.dayOfYear}`);
@@ -122,10 +122,10 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .range([0, innerHeight])
       .padding(0.1);
 
-    // Size: Currency to dot radius (use scaleSqrt for better visual perception)
-    const sizeScale = d3.scaleSqrt()
+    // Size: Currency to bar height
+    const heightScale = d3.scaleLinear()
       .domain([0, d3.max(filteredData, d => d.currencyValue)])
-      .range([DOT_CONFIG.MIN_RADIUS, DOT_CONFIG.MAX_RADIUS]);
+      .range([0, yScale.bandwidth()]);
 
     // Color: Theatre to color
     const colorScale = d3.scaleOrdinal()
@@ -191,10 +191,13 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
         ? formatCurrency(d.currencyValue)
         : 'No receipt data';
 
+      const mouseX = event.clientX || event.pageX;
+      const mouseY = event.clientY || event.pageY;
+
       tooltip
         .style('opacity', 1)
-        .style('left', `${event.pageX + 10}px`)
-        .style('top', `${event.pageY - 10}px`)
+        .style('left', `${mouseX + 10}px`)
+        .style('top', `${mouseY - 10}px`)
         .html(`
           <strong>${dateStr}</strong><br/>
           ${d.theatre}<br/>
@@ -208,19 +211,26 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       d3.select(tooltipRef.current).style('opacity', 0);
     };
 
-    // Render circles for performances with revenue data
-    g.selectAll('.performance-dot')
+    // Render bars for performances with revenue data
+    const dayWidth = innerWidth / 365;
+    const minBarHeight = 2;
+    g.selectAll('.performance-bar')
       .data(dotsData.filter(d => d.currencyValue > 0))
-      .join('circle')
-      .attr('class', 'performance-dot')
-      .attr('cx', d => xScale(d.dayOfYear) + (d.xJitter || 0))
-      .attr('cy', d => yScale(d.year) + yScale.bandwidth() / 2 + (d.yOffset || 0))
-      .attr('r', d => sizeScale(d.currencyValue))
+      .join('rect')
+      .attr('class', 'performance-bar')
+      .attr('x', d => xScale(d.dayOfYear) - dayWidth / 2)
+      .attr('y', d => {
+        const barHeight = Math.max(minBarHeight, heightScale(d.currencyValue));
+        return yScale(d.year) + yScale.bandwidth() - barHeight;
+      })
+      .attr('width', dayWidth)
+      .attr('height', d => Math.max(minBarHeight, heightScale(d.currencyValue)))
       .attr('fill', d => colorScale(d.theatre))
       .attr('opacity', DOT_CONFIG.OPACITY)
       .style('mix-blend-mode', 'multiply')
-      .on('mouseover', showTooltip)
-      .on('mouseout', hideTooltip)
+      .on('mouseenter', showTooltip)
+      .on('mousemove', showTooltip)
+      .on('mouseleave', hideTooltip)
       .style('cursor', 'pointer');
 
     // Render asterisks for performances without revenue data
@@ -229,16 +239,17 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .join('text')
       .attr('class', 'performance-asterisk')
       .attr('x', d => xScale(d.dayOfYear) + (d.xJitter || 0))
-      .attr('y', d => yScale(d.year) + yScale.bandwidth() / 2 + (d.yOffset || 0))
+      .attr('y', d => yScale(d.year) + yScale.bandwidth() - 2)
       .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'central')
+      .attr('dominant-baseline', 'baseline')
       .attr('fill', d => colorScale(d.theatre))
       .attr('opacity', ASTERISK_OPACITY)
       .attr('font-size', ASTERISK_FONT_SIZE)
       .text('*')
       .style('mix-blend-mode', 'multiply')
-      .on('mouseover', showTooltip)
-      .on('mouseout', hideTooltip)
+      .on('mouseenter', showTooltip)
+      .on('mousemove', showTooltip)
+      .on('mouseleave', hideTooltip)
       .style('cursor', 'pointer');
 
   }, [data, width, height, visibleTheatres]);
@@ -248,11 +259,11 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
     .range([THEATRE_COLORS[THEATRES.DRURY_LANE], THEATRE_COLORS[THEATRES.COVENT_GARDEN]]);
 
   // Create size scale for legend
-  const legendSizeScale = React.useMemo(() => {
+  const legendHeightScale = React.useMemo(() => {
     if (!data || data.length === 0) return null;
-    return d3.scaleSqrt()
+    return d3.scaleLinear()
       .domain([0, d3.max(data, d => d.currencyValue)])
-      .range([DOT_CONFIG.MIN_RADIUS, DOT_CONFIG.MAX_RADIUS]);
+      .range([0, DOT_CONFIG.MAX_RADIUS * 2]);
   }, [data]);
 
   return (
@@ -295,10 +306,10 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
               cursor: "pointer",
               position: "relative",
               fontSize: LEGEND_FONT_SIZE,
-              padding: "0 0.6rem",
+              padding: "0 0.75rem",
               borderRadius: "40px",
-              height: "28px",
-              color: "black",
+              height: "32px",
+              color: visibleTheatres[theatre] ? "white" : "black",
               border: visibleTheatres[theatre] ? "1px solid white" : "1px solid #ccc",
               transition: "all 0.2s",
             })}
@@ -321,8 +332,8 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "16px",
-                height: "16px",
+                width: "18px",
+                height: "18px",
                 border: visibleTheatres[theatre] ? "1px solid transparent" : "1px solid #ccc",
                 transition: "all 0.2s",
                 flexShrink: 0,
@@ -333,10 +344,10 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
               }}
             >
               {visibleTheatres[theatre] && (
-                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                   <path
                     d="M2 7L5.5 10.5L12 3"
-                    stroke="black"
+                    stroke="white"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -376,27 +387,32 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
           >
             Box office receipts:
           </span>
-          {legendSizeScale && legendValues.map(({ label, value }) => (
-            <div
-              key={label}
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              })}
-            >
-              <svg width={DOT_CONFIG.MAX_RADIUS * 2 + 4} height={DOT_CONFIG.MAX_RADIUS * 2 + 4}>
-                <circle
-                  cx={DOT_CONFIG.MAX_RADIUS + 2}
-                  cy={DOT_CONFIG.MAX_RADIUS + 2}
-                  r={legendSizeScale(value)}
-                  fill="#666"
-                  opacity={1}
-                />
-              </svg>
-              <span>{label}</span>
-            </div>
-          ))}
+          {legendHeightScale && legendValues.map(({ label, value }) => {
+            const barHeight = legendHeightScale(value);
+            const maxHeight = DOT_CONFIG.MAX_RADIUS * 2 + 4;
+            return (
+              <div
+                key={label}
+                className={css({
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: "0.5rem",
+                })}
+              >
+                <svg width="6" height={maxHeight}>
+                  <rect
+                    x="2"
+                    y={maxHeight - barHeight}
+                    width="2"
+                    height={barHeight}
+                    fill="#666"
+                    opacity={1}
+                  />
+                </svg>
+                <span>{label}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div
