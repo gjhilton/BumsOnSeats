@@ -9,8 +9,8 @@ const THEATRES = {
 };
 
 const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: "#cf2e2e",    // Red
-  [THEATRES.COVENT_GARDEN]: "#0693e3"  // Blue
+  [THEATRES.DRURY_LANE]: "#ff00ff",    // Electric pink
+  [THEATRES.COVENT_GARDEN]: "#00ffff"  // Electric blue
 };
 
 const YEAR_RANGE = {
@@ -21,7 +21,7 @@ const YEAR_RANGE = {
 const DOT_CONFIG = {
   MIN_RADIUS: 0.1,
   MAX_RADIUS: 10,
-  OPACITY: 0.3,
+  OPACITY: 1,
   VERTICAL_OFFSET: 0,   // px between stacked dots
   HORIZONTAL_JITTER: 0  // max ±px for horizontal jitter
 };
@@ -218,6 +218,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr('r', d => sizeScale(d.currencyValue))
       .attr('fill', d => colorScale(d.theatre))
       .attr('opacity', DOT_CONFIG.OPACITY)
+      .style('mix-blend-mode', 'multiply')
       .on('mouseover', showTooltip)
       .on('mouseout', hideTooltip)
       .style('cursor', 'pointer');
@@ -235,6 +236,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr('opacity', ASTERISK_OPACITY)
       .attr('font-size', ASTERISK_FONT_SIZE)
       .text('*')
+      .style('mix-blend-mode', 'multiply')
       .on('mouseover', showTooltip)
       .on('mouseout', hideTooltip)
       .style('cursor', 'pointer');
@@ -324,6 +326,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
                 border: visibleTheatres[theatre] ? "1px solid transparent" : "1px solid #ccc",
                 transition: "all 0.2s",
                 flexShrink: 0,
+                cursor: "pointer",
               })}
               style={{
                 backgroundColor: visibleTheatres[theatre] ? bgColor : "white",
@@ -333,7 +336,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
                 <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
                   <path
                     d="M2 7L5.5 10.5L12 3"
-                    stroke="white"
+                    stroke="black"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -341,7 +344,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
                 </svg>
               )}
             </span>
-            <span>{theatre}</span>
+            <span className={css({ cursor: "pointer", fontWeight: "600" })}>{theatre}</span>
           </label>
           );
         })}
