@@ -19,11 +19,11 @@ const YEAR_RANGE = {
 };
 
 const DOT_CONFIG = {
-  MIN_RADIUS: 1,
+  MIN_RADIUS: 0.1,
   MAX_RADIUS: 10,
   OPACITY: 0.3,
-  VERTICAL_OFFSET: 2.5,   // px between stacked dots
-  HORIZONTAL_JITTER: 0.8  // max ±px for horizontal jitter
+  VERTICAL_OFFSET: 0,   // px between stacked dots
+  HORIZONTAL_JITTER: 0  // max ±px for horizontal jitter
 };
 
 const CHART_MARGINS = {
@@ -33,7 +33,8 @@ const CHART_MARGINS = {
   left: 80
 };
 
-const ASTERISK_FONT_SIZE = "8px";
+const ASTERISK_FONT_SIZE = "9px";
+const ASTERISK_OPACITY = 0.6;
 
 function prepareDotsWithOffsets(data) {
   const groups = d3.group(data, d => `${d.year}-${d.dayOfYear}`);
@@ -57,7 +58,7 @@ function prepareDotsWithOffsets(data) {
   return dotsData;
 }
 
-export function D3Chart({ data, height = 1560 }) {
+export function CalendarOfPerformances({ data, height = 1560 }) {
   const svgRef = useRef();
   const containerRef = useRef();
   const [width, setWidth] = useState(1200);
@@ -187,7 +188,7 @@ export function D3Chart({ data, height = 1560 }) {
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'central')
       .attr('fill', d => colorScale(d.theatre))
-      .attr('opacity', 1)
+      .attr('opacity', ASTERISK_OPACITY)
       .attr('font-size', ASTERISK_FONT_SIZE)
       .text('*');
 
@@ -231,7 +232,20 @@ export function D3Chart({ data, height = 1560 }) {
           alignItems: "center",
         })}
       >
-        {[THEATRES.DRURY_LANE, THEATRES.COVENT_GARDEN].map((theatre) => (
+        {[THEATRES.DRURY_LANE, THEATRES.COVENT_GARDEN].map((theatre) => {
+          // Convert hex to rgba with opacity
+          const hexToRgba = (hex, alpha) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+          };
+
+          const bgColor = visibleTheatres[theatre]
+            ? hexToRgba(colorScale(theatre), DOT_CONFIG.OPACITY)
+            : "white";
+
+          return (
           <label
             key={theatre}
             className={css({
@@ -240,7 +254,17 @@ export function D3Chart({ data, height = 1560 }) {
               gap: "0.5rem",
               cursor: "pointer",
               position: "relative",
+              fontSize: "14px",
+              padding: "0 0.6rem",
+              borderRadius: "40px",
+              height: "28px",
+              color: "black",
+              border: visibleTheatres[theatre] ? "1px solid white" : "1px solid #ccc",
+              transition: "all 0.2s",
             })}
+            style={{
+              backgroundColor: bgColor,
+            }}
           >
             <input
               type="checkbox"
@@ -257,16 +281,18 @@ export function D3Chart({ data, height = 1560 }) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "20px",
-                height: "20px",
-                border: "2px solid black",
-                backgroundColor: visibleTheatres[theatre] ? "black" : "white",
+                width: "16px",
+                height: "16px",
+                border: visibleTheatres[theatre] ? "1px solid transparent" : "1px solid #ccc",
                 transition: "all 0.2s",
                 flexShrink: 0,
               })}
+              style={{
+                backgroundColor: visibleTheatres[theatre] ? bgColor : "white",
+              }}
             >
               {visibleTheatres[theatre] && (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
                   <path
                     d="M2 7L5.5 10.5L12 3"
                     stroke="white"
@@ -277,25 +303,10 @@ export function D3Chart({ data, height = 1560 }) {
                 </svg>
               )}
             </span>
-            <span
-              className={css({
-                fontSize: "16px",
-              })}
-            >
-              {theatre}
-            </span>
-            <span
-              className={css({
-                display: "inline-block",
-                width: "18px",
-                height: "18px",
-                borderRadius: "50%",
-                opacity: DOT_CONFIG.OPACITY,
-              })}
-              style={{ backgroundColor: colorScale(theatre) }}
-            />
+            <span>{theatre}</span>
           </label>
-        ))}
+          );
+        })}
       </div>
 
       {/* Dot size legend */}
@@ -339,7 +350,7 @@ export function D3Chart({ data, height = 1560 }) {
                   cy={DOT_CONFIG.MAX_RADIUS + 2}
                   r={legendSizeScale(value)}
                   fill="#666"
-                  opacity={DOT_CONFIG.OPACITY}
+                  opacity={1}
                 />
               </svg>
               <span>{label}</span>

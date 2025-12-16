@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { D3Chart } from "@components/D3Chart/D3Chart";
+import { CalendarOfPerformances } from "@components/CalendarOfPerformances/CalendarOfPerformances";
 import { css } from "@generated/css";
 import { useState, useEffect } from "react";
 import * as d3 from "d3";
@@ -102,7 +102,7 @@ function Performances() {
           marginRight: "100px",
         })}
       >
-        Theatrical Performance Calendar (1732-1809)
+        Performance Calendar (1732-1809)
       </h1>
       <p
         className={css({
@@ -117,7 +117,7 @@ function Performances() {
         {data.length} performances visualized across 77 years
       </p>
       <div className={css({ mt: "2xl" })}>
-        <D3Chart data={data} height={1560} />
+        <CalendarOfPerformances data={data} height={1560} />
       </div>
     </div>
   );
