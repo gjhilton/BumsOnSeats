@@ -1,4 +1,5 @@
 import { css } from "@generated/css";
+import { Link } from "@tanstack/react-router";
 
 const Paper = ({ children }) => (
   <div
@@ -38,7 +39,11 @@ const Paper = ({ children }) => (
   </div>
 );
 
-const Benefit = ({ fontSource }) => (
+const Benefit = (
+  {
+    // fontSource
+  },
+) => (
   <div
     className={css({
       display: "block",
@@ -61,7 +66,11 @@ const Benefit = ({ fontSource }) => (
   </div>
 );
 
-const Theatres = ({ fontSource }) => (
+const Theatres = (
+  {
+    //fontSource
+  },
+) => (
   <div
     className={css({
       display: "block",
@@ -82,7 +91,11 @@ const Theatres = ({ fontSource }) => (
   </div>
 );
 
-const Today = ({ fontSource }) => {
+const Today = (
+  {
+    // fontSource
+  },
+) => {
   const now = new Date();
   const dayOfWeek = now.toLocaleDateString("en-GB", { weekday: "long" });
   const month = now.toLocaleDateString("en-GB", { month: "long" });
@@ -105,8 +118,8 @@ const Today = ({ fontSource }) => {
     <div
       className={css({
         display: "block",
-        
-      marginTop:"1em"
+
+        marginTop: "1em",
       })}
     >
       <Bodycopy>
@@ -117,7 +130,41 @@ const Today = ({ fontSource }) => {
   );
 };
 
-const Bodycopy = ({ children }) => (
+const Act = ({
+  children,
+  title,
+  link,
+  number
+  // , fontSource
+}) => {
+  const content = (
+    <>
+      <h3><Caps>ACT</Caps> {number}: <Italic>{title}</Italic></h3>
+      <Paragraph>{children}</Paragraph>
+    </>
+  );
+
+  return (
+    <div
+      className={css({
+        fontWeight: "500",
+        fontSize: "3.2cqw",
+        display: "inline-block",
+        lineHeight: "1",
+        padding: " 0",
+        wordSpacing: "0.3em",
+      })}
+    >
+      {link ? <Link to={link} className={css({ cursor: "pointer" })}>{content}</Link> : content}
+    </div>
+  );
+}
+
+
+const Bodycopy = ({
+  children,
+  // , fontSource
+}) => (
   <div
     className={css({
       fontWeight: "500",
@@ -132,7 +179,10 @@ const Bodycopy = ({ children }) => (
   </div>
 );
 
-const Caps = ({ children }) => (
+const Caps = ({
+  children,
+  // , fontSource
+}) => (
   <span
     className={css({
       letterSpacing: "0.3rem",
@@ -143,7 +193,10 @@ const Caps = ({ children }) => (
   </span>
 );
 
-const Italic = ({ children }) => (
+const Italic = ({
+  children,
+  // , fontSource
+}) => (
   <span
     className={css({
       fontStyle: "italic",
@@ -153,10 +206,14 @@ const Italic = ({ children }) => (
   </span>
 );
 
-const Pretitle = ({ fontSource }) => (
+const Pretitle = (
+  {
+    // fontSource
+  },
+) => (
   <div
     className={css({
-      display: "block"
+      display: "block",
     })}
   >
     <Bodycopy>
@@ -165,11 +222,16 @@ const Pretitle = ({ fontSource }) => (
   </div>
 );
 
-const Title = ({ fontSource }) => (
-  <div  className={css({
-      
-        margin: "3em 0"
-      })}>
+const Title = (
+  {
+    // fontSource
+  },
+) => (
+  <div
+    className={css({
+      margin: "3em 0",
+    })}
+  >
     <h1
       className={css({
         textTransform: "uppercase",
@@ -202,18 +264,27 @@ const Title = ({ fontSource }) => (
   </div>
 );
 
-const Smallcaps = ({ children }) => (
+const Smallcaps = (
+  {
+    children
+    // , fontSource
+  },
+) => (
   <span
     className={css({
       textTransform: "lowercase",
       fontVariant: "small-caps",
     })}
   >
-    or
+    {children}
   </span>
 );
 
-const Footer = () => (
+const Footer = (
+  {
+    // , fontSource
+  },
+) => (
   <div
     className={css({
       position: "absolute",
@@ -222,21 +293,65 @@ const Footer = () => (
       right: "0",
       padding: "6em",
       fontSize: "2cqw",
-      textAlign:"justify",
-        fontSize: "1cqw !important",
+      textAlign: "justify",
     })}
-  ><Bodycopy>
-    <span  className={css({
-  
-        fontSize: "2.5cqw ",
-    })}>
-    All data are copyright the <a href="https://www.theatronomics.com">Theatronomics Project</a> and are used by their kind permission, with huge gratitude and subject to their <a href="https://www.theatronomics.com/data/introduction/">licensing terms and conditions</a>. Any and all errors are however my own. <Italic>The code and design for his site is copyright &copy; 2025-6 g.j.hilton / <a href="https://funeralgames.co.uk">Funeral Games</a> and is available on  <a href="https://github.com/gjhilton/BumsOnSeats">Github</a>.</Italic>
-    </span>
+  >
+    <Bodycopy>
+      <span
+        className={css({
+          fontSize: "2.5cqw ",
+        })}
+      >
+        All data are copyright the{" "}
+        <a href="https://www.theatronomics.com">Theatronomics Project</a> and
+        are used by their kind permission, with huge gratitude and subject to
+        their{" "}
+        <a href="https://www.theatronomics.com/data/introduction/">
+          licensing terms and conditions
+        </a>
+        . Any and all errors are however my own.{" "}
+        <Italic>
+          The code and design for his site is copyright &copy; 2025-6 g.j.hilton
+          / <a href="https://funeralgames.co.uk">Funeral Games</a> and is
+          available on{" "}
+          <a href="https://github.com/gjhilton/BumsOnSeats">Github</a>.
+        </Italic>
+      </span>
     </Bodycopy>
   </div>
 );
 
-export function Playbill({ fontSource }) {
+const Paragraph = (
+  {
+    children
+    // , fontSource
+  },
+) => (
+  <span
+    className={css({
+      display: "block",
+      textAlign: "justify",
+        padding: "0 4em",
+    })}
+  >
+    <Bodycopy>
+      <span
+        className={css({
+          fontSize: "2.5cqw ",
+        })}
+      >
+        {children}
+      </span>
+        </Bodycopy>
+    </span>
+
+);
+
+export function Playbill(
+  {
+    //fontSource
+  },
+) {
   // e.g. const letterSpacing = fontSource === 'local' ? '0.04em' : '0.05em'
 
   return (
@@ -254,6 +369,12 @@ export function Playbill({ fontSource }) {
         <Today />
         <Pretitle />
         <Title />
+        <Act number="1" link="/performances" title="Performance Calendar">
+          To this calendar is joined an account of the monies received at each performance, faithfully recorded, whereby the prosperity or decline of particular entertainments may be plainly discerned.
+        </Act>
+         <Act number="2"  title="(In a state of improvement)">
+          As yet incomplete, the developers being daily employed upon it
+        </Act>
         <Footer />
       </div>
     </Paper>
