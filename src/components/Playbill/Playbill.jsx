@@ -6,7 +6,7 @@ const Paper = ({ children }) => (
       containerType: "inline-size",
       width: "80%",
       maxWidth: "800px",
-      minHeight: "80vh",
+      aspectRatio: "1 / 1.3",
       margin: "2rem auto",
       bg: "#e8dcc8",
       borderRadius: "3px 5px 4px 6px",
@@ -84,8 +84,8 @@ const Theatres = ({ fontSource }) => (
 
 const Today = ({ fontSource }) => {
   const now = new Date();
-  const dayOfWeek = now.toLocaleDateString("en-US", { weekday: "long" });
-  const month = now.toLocaleDateString("en-US", { month: "long" });
+  const dayOfWeek = now.toLocaleDateString("en-GB", { weekday: "long" });
+  const month = now.toLocaleDateString("en-GB", { month: "long" });
   const day = now.getDate();
   const year = now.getFullYear();
 
@@ -105,6 +105,8 @@ const Today = ({ fontSource }) => {
     <div
       className={css({
         display: "block",
+        
+      marginTop:"1em"
       })}
     >
       <Bodycopy>
@@ -154,7 +156,7 @@ const Italic = ({ children }) => (
 const Pretitle = ({ fontSource }) => (
   <div
     className={css({
-      display: "block",
+      display: "block"
     })}
   >
     <Bodycopy>
@@ -164,14 +166,17 @@ const Pretitle = ({ fontSource }) => (
 );
 
 const Title = ({ fontSource }) => (
-  <div>
+  <div  className={css({
+      
+        margin: "3em 0"
+      })}>
     <h1
       className={css({
         textTransform: "uppercase",
-        fontWeight: "900",
+        fontWeight: "300",
         fontSize: "9cqw",
         display: "block",
-        lineHeight: "1",
+        lineHeight: "0.75",
         padding: " 0",
         margin: "0.4em 0 0",
         transform: "scaleY(1.1)",
@@ -187,12 +192,12 @@ const Title = ({ fontSource }) => (
         fontWeight: "500",
         fontSize: "9cqw",
         display: "block",
-        lineHeight: "1",
+        lineHeight: "0.75",
         padding: " 0",
         margin: "0",
       })}
     >
-      <Italic>Bums</Italic> on Seats
+      <Italic>Bums</Italic> on Seats<Italic>!</Italic>
     </h2>
   </div>
 );
@@ -208,6 +213,29 @@ const Smallcaps = ({ children }) => (
   </span>
 );
 
+const Footer = () => (
+  <div
+    className={css({
+      position: "absolute",
+      bottom: "0",
+      left: "0",
+      right: "0",
+      padding: "6em",
+      fontSize: "2cqw",
+      textAlign:"justify",
+        fontSize: "1cqw !important",
+    })}
+  ><Bodycopy>
+    <span  className={css({
+  
+        fontSize: "2.5cqw ",
+    })}>
+    All data are copyright the <a href="https://www.theatronomics.com">Theatronomics Project</a> and are used by their kind permission, with huge gratitude and subject to their <a href="https://www.theatronomics.com/data/introduction/">licensing terms and conditions</a>. Any and all errors are however my own. <Italic>The code and design for his site is copyright &copy; 2025-6 g.j.hilton / <a href="https://funeralgames.co.uk">Funeral Games</a> and is available on  <a href="https://github.com/gjhilton/BumsOnSeats">Github</a>.</Italic>
+    </span>
+    </Bodycopy>
+  </div>
+);
+
 export function Playbill({ fontSource }) {
   // e.g. const letterSpacing = fontSource === 'local' ? '0.04em' : '0.05em'
 
@@ -215,6 +243,8 @@ export function Playbill({ fontSource }) {
     <Paper>
       <div
         className={css({
+          position: "relative",
+          height: "100%",
           fontFamily: "var(--font-caslon)",
           textAlign: "center",
         })}
@@ -224,6 +254,7 @@ export function Playbill({ fontSource }) {
         <Today />
         <Pretitle />
         <Title />
+        <Footer />
       </div>
     </Paper>
   );
