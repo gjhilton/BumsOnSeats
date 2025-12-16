@@ -13,19 +13,13 @@ function processData(rows) {
     const date = new Date(row.Date);
     const year = date.getFullYear();
 
-    // Calculate day of year
     const startOfYear = new Date(year, 0, 0);
     const diff = date - startOfYear;
     const oneDay = 1000 * 60 * 60 * 24;
-    let dayOfYear = Math.floor(diff / oneDay);
+    const dayOfYear = Math.floor(diff / oneDay);
 
-    // Adjust for non-leap years to maintain vertical alignment
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    if (!isLeap && dayOfYear >= 60) {
-      dayOfYear++; // Insert phantom Feb 29 for alignment
-    }
+    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 
-    // Parse currency values with trimming
     const pounds = parseInt(row.Pounds) || 0;
     const shillings = parseInt(String(row.Shillings).trim()) || 0;
     const pence = parseInt(String(row.Pence).trim()) || 0;
@@ -35,6 +29,7 @@ function processData(rows) {
       date,
       year,
       dayOfYear,
+      isLeapYear,
       currencyValue,
       theatre: row.Theatre,
       performances: row.Performances,

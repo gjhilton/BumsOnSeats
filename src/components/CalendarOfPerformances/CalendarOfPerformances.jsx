@@ -68,8 +68,8 @@ const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_START_DAYS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
-const DAYS_PER_YEAR = 366;
-const DAYS_FOR_WIDTH = 365;
+const DAYS_IN_LEAP_YEAR = 366;
+const DAYS_IN_REGULAR_YEAR = 365;
 
 const CURRENCY_CONVERSION = {
   PENCE_PER_POUND: 240,
@@ -123,10 +123,21 @@ function createColorScale() {
     .range([THEATRE_COLORS[THEATRES.DRURY_LANE], THEATRE_COLORS[THEATRES.COVENT_GARDEN]]);
 }
 
-function createXScale(innerWidth) {
+function createXScale(innerWidth, daysInYear) {
   return d3.scaleLinear()
-    .domain([1, DAYS_PER_YEAR])
+    .domain([1, daysInYear])
     .range([0, innerWidth]);
+}
+
+function getXPosition(dayOfYear, isLeapYear, innerWidth) {
+  const daysInYear = isLeapYear ? DAYS_IN_LEAP_YEAR : DAYS_IN_REGULAR_YEAR;
+  const scale = createXScale(innerWidth, daysInYear);
+  return scale(dayOfYear);
+}
+
+function getDayWidth(isLeapYear, innerWidth) {
+  const daysInYear = isLeapYear ? DAYS_IN_LEAP_YEAR : DAYS_IN_REGULAR_YEAR;
+  return innerWidth / daysInYear;
 }
 
 function createYScale(innerHeight) {
@@ -156,6 +167,61 @@ function calculateBarHeight(currencyValue, heightScale) {
 
 function calculateBarY(year, yScale, barHeight) {
   return yScale(year) + yScale.bandwidth() - barHeight;
+}
+
+function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
+  const svgElement = svgRef.current;
+  if (!svgElement) return;
+
+  const serializer = new XMLSerializer();
+  let svgString = serializer.serializeToString(svgElement);
+
+  svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+
+  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function exportPNG(svgRef, filename = 'calendar-of-performances.png') {
+  const svgElement = svgRef.current;
+  if (!svgElement) return;
+
+  const svgData = new XMLSerializer().serializeToString(svgElement);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob((blob) => {
+      const pngUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = pngUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(pngUrl);
+    });
+  };
+
+  img.src = url;
 }
 
 export function CalendarOfPerformances({ data, height = 1560 }) {
@@ -206,7 +272,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
     const innerWidth = width - CHART_MARGINS.left - CHART_MARGINS.right;
     const innerHeight = height - CHART_MARGINS.top - CHART_MARGINS.bottom;
 
-    const xScale = createXScale(innerWidth);
+    const xScaleForLabels = createXScale(innerWidth, DAYS_IN_LEAP_YEAR);
     const yScale = createYScale(innerHeight);
     const heightScale = createHeightScale(d3.max(filteredData, d => d.currencyValue), yScale.bandwidth());
 
@@ -231,7 +297,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .data(MONTH_LABELS)
       .join("text")
       .attr("class", "month-label")
-      .attr("x", (d, i) => xScale(MONTH_START_DAYS[i]))
+      .attr("x", (d, i) => xScaleForLabels(MONTH_START_DAYS[i]))
       .attr("y", AXIS_CONFIG.MONTH_LABEL_Y)
       .text(d => d)
       .style("font-size", AXIS_CONFIG.FONT_SIZE)
@@ -266,14 +332,16 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       d3.select(tooltipRef.current).style('opacity', 0);
     };
 
-    const dayWidth = innerWidth / DAYS_FOR_WIDTH;
     const bars = g.selectAll('.performance-bar')
       .data(performanceData.filter(d => d.currencyValue > 0))
       .join('rect')
       .attr('class', 'performance-bar')
-      .attr('x', d => xScale(d.dayOfYear) - dayWidth / 2)
+      .attr('x', d => {
+        const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
+        return getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) - dayWidth / 2;
+      })
       .attr('y', d => calculateBarY(d.year, yScale, calculateBarHeight(d.currencyValue, heightScale)))
-      .attr('width', dayWidth)
+      .attr('width', d => getDayWidth(d.isLeapYear, innerWidth))
       .attr('height', d => calculateBarHeight(d.currencyValue, heightScale))
       .attr('fill', d => colorScale(d.theatre))
       .attr('opacity', PERFORMANCE_CONFIG.OPACITY)
@@ -285,7 +353,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .data(performanceData.filter(d => d.currencyValue === 0))
       .join('text')
       .attr('class', 'performance-asterisk')
-      .attr('x', d => xScale(d.dayOfYear))
+      .attr('x', d => getXPosition(d.dayOfYear, d.isLeapYear, innerWidth))
       .attr('y', d => yScale(d.year) + yScale.bandwidth() - ASTERISK_CONFIG.BOTTOM_OFFSET)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'baseline')
@@ -307,11 +375,20 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
         marginTop: "xl",
       })}
     >
-      <TheatreFilterLegend
-        visibleTheatres={visibleTheatres}
-        toggleTheatre={toggleTheatre}
-        colorScale={colorScale}
-      />
+      <div className={css({
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: "1rem"
+      })}>
+        <TheatreFilterLegend
+          visibleTheatres={visibleTheatres}
+          toggleTheatre={toggleTheatre}
+          colorScale={colorScale}
+        />
+
+        <ExportButtons svgRef={svgRef} />
+      </div>
 
       <ReceiptsLegend legendHeightScale={legendHeightScale} />
 
@@ -496,5 +573,42 @@ function Tooltip({ tooltipRef }) {
         lineHeight: "1.4",
       })}
     />
+  );
+}
+
+function ExportButtons({ svgRef }) {
+  const buttonStyles = {
+    padding: "0.5rem 1rem",
+    fontSize: "14px",
+    fontWeight: "600",
+    border: `1px solid ${THEME.BORDER_GREY}`,
+    borderRadius: "4px",
+    background: THEME.BORDER_WHITE,
+    cursor: "pointer",
+    transition: THEME.TRANSITION,
+    _hover: {
+      background: "#f5f5f5",
+    }
+  };
+
+  return (
+    <div className={css({
+      display: "flex",
+      gap: "0.5rem",
+      marginRight: `${CHART_MARGINS.right}px`
+    })}>
+      <button
+        onClick={() => exportSVG(svgRef)}
+        className={css(buttonStyles)}
+      >
+        Export SVG
+      </button>
+      <button
+        onClick={() => exportPNG(svgRef)}
+        className={css(buttonStyles)}
+      >
+        Export PNG
+      </button>
+    </div>
   );
 }
