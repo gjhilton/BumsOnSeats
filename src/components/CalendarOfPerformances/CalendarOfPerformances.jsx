@@ -9,8 +9,8 @@ const THEATRES = {
 };
 
 const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: "#ff00ff",    // Electric pink
-  [THEATRES.COVENT_GARDEN]: "#00ffff"  // Electric blue
+  [THEATRES.DRURY_LANE]: "#E91E63",    // Magenta/Pink
+  [THEATRES.COVENT_GARDEN]: "#00BCD4"  // Cyan
 };
 
 const YEAR_RANGE = {
