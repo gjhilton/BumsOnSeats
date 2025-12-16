@@ -62,6 +62,7 @@ function prepareDotsWithOffsets(data) {
 export function CalendarOfPerformances({ data, height = 1560 }) {
   const svgRef = useRef();
   const containerRef = useRef();
+  const tooltipRef = useRef();
   const [width, setWidth] = useState(1200);
   const [visibleTheatres, setVisibleTheatres] = useState({
     [THEATRES.DRURY_LANE]: true,
@@ -168,6 +169,45 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
     // Prepare dots with offsets for overlapping handling
     const dotsData = prepareDotsWithOffsets(filteredData);
 
+    // Helper to format currency (pence to £.s.d)
+    const formatCurrency = (pence) => {
+      const pounds = Math.floor(pence / 240);
+      const remainingPence = pence % 240;
+      const shillings = Math.floor(remainingPence / 12);
+      const finalPence = remainingPence % 12;
+      return `£${pounds}.${shillings}.${finalPence}`;
+    };
+
+    // Helper to show tooltip
+    const showTooltip = (event, d) => {
+      const tooltip = d3.select(tooltipRef.current);
+      const dateStr = d.date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const receipts = d.currencyValue > 0
+        ? formatCurrency(d.currencyValue)
+        : 'No receipt data';
+
+      tooltip
+        .style('opacity', 1)
+        .style('left', `${event.pageX + 10}px`)
+        .style('top', `${event.pageY - 10}px`)
+        .html(`
+          <strong>${dateStr}</strong><br/>
+          ${d.theatre}<br/>
+          ${d.performances}<br/>
+          ${receipts}
+        `);
+    };
+
+    // Helper to hide tooltip
+    const hideTooltip = () => {
+      d3.select(tooltipRef.current).style('opacity', 0);
+    };
+
     // Render circles for performances with revenue data
     g.selectAll('.performance-dot')
       .data(dotsData.filter(d => d.currencyValue > 0))
@@ -177,7 +217,10 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr('cy', d => yScale(d.year) + yScale.bandwidth() / 2 + (d.yOffset || 0))
       .attr('r', d => sizeScale(d.currencyValue))
       .attr('fill', d => colorScale(d.theatre))
-      .attr('opacity', DOT_CONFIG.OPACITY);
+      .attr('opacity', DOT_CONFIG.OPACITY)
+      .on('mouseover', showTooltip)
+      .on('mouseout', hideTooltip)
+      .style('cursor', 'pointer');
 
     // Render asterisks for performances without revenue data
     g.selectAll('.performance-asterisk')
@@ -191,7 +234,10 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr('fill', d => colorScale(d.theatre))
       .attr('opacity', ASTERISK_OPACITY)
       .attr('font-size', ASTERISK_FONT_SIZE)
-      .text('*');
+      .text('*')
+      .on('mouseover', showTooltip)
+      .on('mouseout', hideTooltip)
+      .style('cursor', 'pointer');
 
   }, [data, width, height, visibleTheatres]);
 
@@ -206,15 +252,6 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .domain([0, d3.max(data, d => d.currencyValue)])
       .range([DOT_CONFIG.MIN_RADIUS, DOT_CONFIG.MAX_RADIUS]);
   }, [data]);
-
-  // Helper function to format currency value (pence to £.s.d)
-  const formatCurrency = (pence) => {
-    const pounds = Math.floor(pence / 240);
-    const remainingPence = pence % 240;
-    const shillings = Math.floor(remainingPence / 12);
-    const finalPence = remainingPence % 12;
-    return `£${pounds}.${shillings}.${finalPence}`;
-  };
 
   return (
     <div
@@ -382,6 +419,23 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       </div>
 
       <svg ref={svgRef}></svg>
+
+      <div
+        ref={tooltipRef}
+        className={css({
+          position: "fixed",
+          padding: "0.5rem 0.75rem",
+          background: "rgba(0, 0, 0, 0.85)",
+          color: "white",
+          borderRadius: "4px",
+          fontSize: "12px",
+          pointerEvents: "none",
+          opacity: 0,
+          transition: "opacity 0.2s",
+          zIndex: 1000,
+          lineHeight: "1.4",
+        })}
+      />
     </div>
   );
 }
