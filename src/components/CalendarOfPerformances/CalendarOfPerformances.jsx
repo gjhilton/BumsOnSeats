@@ -46,7 +46,7 @@ const LEGEND_CONFIG = {
 };
 
 const AXIS_CONFIG = {
-  FONT_SIZE: "10px",
+  FONT_SIZE: "14px",
   YEAR_TICK_INTERVAL: 10,
   YEAR_TICK_OFFSET: -2,
   MONTH_LABEL_Y: -10
@@ -144,7 +144,7 @@ function createYScale(innerHeight) {
   return d3.scaleBand()
     .domain(d3.range(YEAR_RANGE.START, YEAR_RANGE.END))
     .range([0, innerHeight])
-    .padding(0.1);
+    .padding(0);
 }
 
 function createHeightScale(maxValue, maxHeight) {
@@ -274,7 +274,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
 
     const xScaleForLabels = createXScale(innerWidth, DAYS_IN_LEAP_YEAR);
     const yScale = createYScale(innerHeight);
-    const heightScale = createHeightScale(d3.max(filteredData, d => d.currencyValue), yScale.bandwidth());
+    const heightScale = createHeightScale(d3.max(data, d => d.currencyValue), yScale.bandwidth());
 
     const svg = d3
       .select(svgRef.current)
@@ -286,9 +286,10 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr("transform", `translate(${CHART_MARGINS.left},${CHART_MARGINS.top})`);
 
     g.append("g")
-      .call(d3.axisLeft(yScale).tickValues(
-        d3.range(YEAR_RANGE.START + AXIS_CONFIG.YEAR_TICK_OFFSET, YEAR_RANGE.END, AXIS_CONFIG.YEAR_TICK_INTERVAL)
-      ))
+      .call(d3.axisLeft(yScale)
+        .tickValues(d3.range(YEAR_RANGE.START + AXIS_CONFIG.YEAR_TICK_OFFSET, YEAR_RANGE.END, AXIS_CONFIG.YEAR_TICK_INTERVAL))
+        .tickSize(0))
+      .call(g => g.select(".domain").remove())
       .selectAll("text")
       .style("font-size", AXIS_CONFIG.FONT_SIZE);
 
