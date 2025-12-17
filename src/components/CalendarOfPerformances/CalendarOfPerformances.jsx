@@ -8,13 +8,8 @@ const THEATRES = {
 };
 
 const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: "#E91E63",
-  [THEATRES.COVENT_GARDEN]: "#00BCD4"
-};
-
-const YEAR_RANGE = {
-  START: 1732,
-  END: 1810
+  [THEATRES.DRURY_LANE]: "#000",
+  [THEATRES.COVENT_GARDEN]: "#FFF"
 };
 
 const CHART_MARGINS = {
@@ -25,43 +20,98 @@ const CHART_MARGINS = {
 };
 
 const PERFORMANCE_CONFIG = {
-  OPACITY: 1,
+  OPACITY: 0.5,
   MIN_BAR_HEIGHT: 2,
-  BLEND_MODE: 'multiply'
+  BLEND_MODE: 'normal'
 };
 
-const ASTERISK_CONFIG = {
-  FONT_SIZE: "9px",
-  OPACITY: 0.6,
-  BOTTOM_OFFSET: 2
+const NO_DATA_CONFIG = {
+  FONT_SIZE: "4px",
+  OPACITY: 1,
+  BOTTOM_OFFSET: 2,
+  FONT_WEIGHT: 900
 };
 
 const LEGEND_CONFIG = {
-  FONT_SIZE: "16px",
+  FONT_SIZE: "12px",
   CHECKBOX_SIZE: 18,
   MAX_HEIGHT: 20,
   BAR_WIDTH: 2,
   PLAQUE_HEIGHT: 32,
-  PLAQUE_PADDING: "0 0.75rem"
+  PLAQUE_PADDING: "0 0.75rem",
+  FONT_WEIGHT_BOLD: "bold",
+  FONT_WEIGHT_SEMIBOLD: "600"
 };
 
 const AXIS_CONFIG = {
-  FONT_SIZE: "14px",
+  FONT_SIZE: "12px",
   YEAR_TICK_INTERVAL: 10,
-  YEAR_TICK_OFFSET: -2,
-  MONTH_LABEL_Y: -10
+  YEAR_TICK_OFFSET: 8,
+  MONTH_LABEL_Y: -10,
+  LABEL_PADDING: 8,
+  TITLE_FONT_WEIGHT: 900,
+  Y_AXIS_TITLE_X: -50,
+  X_AXIS_TITLE_Y: -30
 };
 
-const TOOLTIP_OFFSET = {
-  X: 10,
-  Y: -10
+const TOOLTIP_CONFIG = {
+  OFFSET_X: 10,
+  OFFSET_Y: -10,
+  PADDING: "0.5rem 0.75rem",
+  BACKGROUND: "rgba(0, 0, 0, 0.85)",
+  BORDER_RADIUS: "4px",
+  FONT_SIZE: "12px",
+  OPACITY_HIDDEN: 0,
+  OPACITY_VISIBLE: 1,
+  TRANSITION: "opacity 0.2s",
+  Z_INDEX: 1000,
+  LINE_HEIGHT: "1.4",
+  DATE_FORMAT: {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }
 };
 
 const THEME = {
   BORDER_GREY: "#ccc",
   FILL_GREY: "#666",
+  AXIS_GREY: "#fff",
   BORDER_WHITE: "white",
   TRANSITION: "all 0.2s"
+};
+
+const EXPORT_BUTTON_CONFIG = {
+  PADDING: "0.5rem 1rem",
+  FONT_SIZE: "14px",
+  FONT_WEIGHT_SEMIBOLD: "600",
+  BORDER_RADIUS: "4px",
+  HOVER_BACKGROUND: "#f5f5f5",
+  GAP: "0.5rem",
+  CANVAS_BACKGROUND: "white"
+};
+
+const LAYOUT_CONFIG = {
+  DEFAULT_WIDTH: 1200,
+  CONTAINER_WIDTH: "100%",
+  CONTAINER_MARGIN_TOP: "xl",
+  LEGEND_GAP: "2rem",
+  LEGEND_MARGIN_BOTTOM: "1rem",
+  FILTER_GAP: "0.5rem",
+  RECEIPTS_GAP: "3rem",
+  RECEIPTS_MARGIN_BOTTOM: "2rem",
+  RECEIPTS_ITEM_GAP: "0.5rem",
+  RECEIPTS_LABEL_MARGIN: "0.5rem",
+  NO_DATA_MARGIN_LEFT: "1rem",
+  NO_DATA_PADDING_LEFT: "1rem",
+  HEADER_MARGIN_BOTTOM: "1rem"
+};
+
+const RECEIPTS_LEGEND_CONFIG = {
+  SVG_WIDTH: 6,
+  SVG_HEIGHT_PADDING: 4,
+  RECT_X: 2
 };
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -129,20 +179,23 @@ function createXScale(innerWidth, daysInYear) {
     .range([0, innerWidth]);
 }
 
+function getDaysInYear(isLeapYear) {
+  return isLeapYear ? DAYS_IN_LEAP_YEAR : DAYS_IN_REGULAR_YEAR;
+}
+
 function getXPosition(dayOfYear, isLeapYear, innerWidth) {
-  const daysInYear = isLeapYear ? DAYS_IN_LEAP_YEAR : DAYS_IN_REGULAR_YEAR;
+  const daysInYear = getDaysInYear(isLeapYear);
   const scale = createXScale(innerWidth, daysInYear);
   return scale(dayOfYear);
 }
 
 function getDayWidth(isLeapYear, innerWidth) {
-  const daysInYear = isLeapYear ? DAYS_IN_LEAP_YEAR : DAYS_IN_REGULAR_YEAR;
-  return innerWidth / daysInYear;
+  return innerWidth / getDaysInYear(isLeapYear);
 }
 
-function createYScale(innerHeight) {
+function createYScale(innerHeight, yearStart, yearEnd) {
   return d3.scaleBand()
-    .domain(d3.range(YEAR_RANGE.START, YEAR_RANGE.END))
+    .domain(d3.range(yearStart, yearEnd + 1))
     .range([0, innerHeight])
     .padding(0);
 }
@@ -167,6 +220,25 @@ function calculateBarHeight(currencyValue, heightScale) {
 
 function calculateBarY(year, yScale, barHeight) {
   return yScale(year) + yScale.bandwidth() - barHeight;
+}
+
+function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth) {
+  const isLeft = axisPosition === 'left';
+  const axis = isLeft ? d3.axisLeft(yScale) : d3.axisRight(yScale);
+  const transform = isLeft ? null : `translate(${innerWidth}, 0)`;
+  const labelPadding = isLeft ? -AXIS_CONFIG.LABEL_PADDING : AXIS_CONFIG.LABEL_PADDING;
+
+  const axisGroup = g.append("g");
+  if (transform) axisGroup.attr("transform", transform);
+
+  return axisGroup
+    .call(axis.tickValues(tickYears).tickSize(0))
+    .call(g => g.select(".domain").attr("stroke", THEME.AXIS_GREY))
+    .selectAll("text")
+    .style("font-size", AXIS_CONFIG.FONT_SIZE)
+    .attr("dx", labelPadding)
+    .attr("dy", yScale.bandwidth() / 2)
+    .style("dominant-baseline", "baseline");
 }
 
 function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
@@ -204,7 +276,7 @@ function exportPNG(svgRef, filename = 'calendar-of-performances.png') {
   img.onload = () => {
     canvas.width = img.width;
     canvas.height = img.height;
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = EXPORT_BUTTON_CONFIG.CANVAS_BACKGROUND;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
@@ -229,7 +301,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
   const containerRef = useRef();
   const tooltipRef = useRef();
 
-  const [width, setWidth] = useState(1200);
+  const [width, setWidth] = useState(LAYOUT_CONFIG.DEFAULT_WIDTH);
   const [visibleTheatres, setVisibleTheatres] = useState({
     [THEATRES.DRURY_LANE]: true,
     [THEATRES.COVENT_GARDEN]: true
@@ -267,13 +339,16 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
 
     const filteredData = data.filter(d => visibleTheatres[d.theatre]);
 
+    const yearStart = d3.min(data, d => d.year);
+    const yearEnd = d3.max(data, d => d.year);
+
     d3.select(svgRef.current).selectAll("*").remove();
 
     const innerWidth = width - CHART_MARGINS.left - CHART_MARGINS.right;
     const innerHeight = height - CHART_MARGINS.top - CHART_MARGINS.bottom;
 
-    const xScaleForLabels = createXScale(innerWidth, DAYS_IN_LEAP_YEAR);
-    const yScale = createYScale(innerHeight);
+    const xScaleForLabels = createXScale(innerWidth, DAYS_IN_REGULAR_YEAR);
+    const yScale = createYScale(innerHeight, yearStart, yearEnd);
     const heightScale = createHeightScale(d3.max(data, d => d.currencyValue), yScale.bandwidth());
 
     const svg = d3
@@ -285,13 +360,21 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .append("g")
       .attr("transform", `translate(${CHART_MARGINS.left},${CHART_MARGINS.top})`);
 
-    g.append("g")
-      .call(d3.axisLeft(yScale)
-        .tickValues(d3.range(YEAR_RANGE.START + AXIS_CONFIG.YEAR_TICK_OFFSET, YEAR_RANGE.END, AXIS_CONFIG.YEAR_TICK_INTERVAL))
-        .tickSize(0))
-      .call(g => g.select(".domain").remove())
-      .selectAll("text")
-      .style("font-size", AXIS_CONFIG.FONT_SIZE);
+    const firstTickYear = Math.ceil((yearStart + AXIS_CONFIG.YEAR_TICK_OFFSET) / AXIS_CONFIG.YEAR_TICK_INTERVAL) * AXIS_CONFIG.YEAR_TICK_INTERVAL;
+    const tickYears = d3.range(firstTickYear, yearEnd + 1, AXIS_CONFIG.YEAR_TICK_INTERVAL);
+
+    renderYAxis(g, yScale, tickYears, 'left', innerWidth);
+
+    g.append("text")
+      .attr("class", "y-axis-title")
+      .attr("x", AXIS_CONFIG.Y_AXIS_TITLE_X)
+      .attr("y", 0)
+      .attr("text-anchor", "start")
+      .style("font-size", AXIS_CONFIG.FONT_SIZE)
+      .style("font-weight", AXIS_CONFIG.TITLE_FONT_WEIGHT)
+      .style("font-variant", "small-caps")
+      .style("text-transform", "lowercase")
+      .text("Year");
 
     g.append("g")
       .selectAll(".month-label")
@@ -304,23 +387,29 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .style("font-size", AXIS_CONFIG.FONT_SIZE)
       .style("text-anchor", "start");
 
+    g.append("text")
+      .attr("class", "x-axis-title")
+      .attr("x", 0)
+      .attr("y", AXIS_CONFIG.X_AXIS_TITLE_Y)
+      .attr("text-anchor", "start")
+      .style("font-size", AXIS_CONFIG.FONT_SIZE)
+      .style("font-weight", AXIS_CONFIG.TITLE_FONT_WEIGHT)
+      .style("font-variant", "small-caps")
+      .style("text-transform", "lowercase")
+      .text("Month & day");
+
     const performanceData = preparePerformanceData(filteredData);
 
     const showTooltip = (event, d) => {
-      const dateStr = d.date.toLocaleDateString('en-GB', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const dateStr = d.date.toLocaleDateString('en-GB', TOOLTIP_CONFIG.DATE_FORMAT);
       const receipts = d.currencyValue > 0
         ? formatCurrency(d.currencyValue)
         : 'No receipt data';
 
       d3.select(tooltipRef.current)
-        .style('opacity', 1)
-        .style('left', `${event.clientX + TOOLTIP_OFFSET.X}px`)
-        .style('top', `${event.clientY + TOOLTIP_OFFSET.Y}px`)
+        .style('opacity', TOOLTIP_CONFIG.OPACITY_VISIBLE)
+        .style('left', `${event.clientX + TOOLTIP_CONFIG.OFFSET_X}px`)
+        .style('top', `${event.clientY + TOOLTIP_CONFIG.OFFSET_Y}px`)
         .html(`
           <strong>${dateStr}</strong><br/>
           ${d.theatre}<br/>
@@ -330,7 +419,7 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
     };
 
     const hideTooltip = () => {
-      d3.select(tooltipRef.current).style('opacity', 0);
+      d3.select(tooltipRef.current).style('opacity', TOOLTIP_CONFIG.OPACITY_HIDDEN);
     };
 
     const bars = g.selectAll('.performance-bar')
@@ -339,9 +428,13 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr('class', 'performance-bar')
       .attr('x', d => {
         const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
-        return getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) - dayWidth / 2;
+        const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+        return xPos - dayWidth / 2;
       })
-      .attr('y', d => calculateBarY(d.year, yScale, calculateBarHeight(d.currencyValue, heightScale)))
+      .attr('y', d => {
+        const barHeight = calculateBarHeight(d.currencyValue, heightScale);
+        return calculateBarY(d.year, yScale, barHeight);
+      })
       .attr('width', d => getDayWidth(d.isLeapYear, innerWidth))
       .attr('height', d => calculateBarHeight(d.currencyValue, heightScale))
       .attr('fill', d => colorScale(d.theatre))
@@ -350,21 +443,22 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
 
     attachTooltipHandlers(bars, showTooltip, hideTooltip);
 
-    const asterisks = g.selectAll('.performance-asterisk')
+    const noDataMarkers = g.selectAll('.performance-no-data')
       .data(performanceData.filter(d => d.currencyValue === 0))
       .join('text')
-      .attr('class', 'performance-asterisk')
+      .attr('class', 'performance-no-data')
       .attr('x', d => getXPosition(d.dayOfYear, d.isLeapYear, innerWidth))
-      .attr('y', d => yScale(d.year) + yScale.bandwidth() - ASTERISK_CONFIG.BOTTOM_OFFSET)
+      .attr('y', d => yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'baseline')
       .attr('fill', d => colorScale(d.theatre))
-      .attr('opacity', ASTERISK_CONFIG.OPACITY)
-      .attr('font-size', ASTERISK_CONFIG.FONT_SIZE)
-      .text('*')
+      .attr('opacity', NO_DATA_CONFIG.OPACITY)
+      .attr('font-size', NO_DATA_CONFIG.FONT_SIZE)
+      .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
+      .text('?')
       .style('mix-blend-mode', PERFORMANCE_CONFIG.BLEND_MODE);
 
-    attachTooltipHandlers(asterisks, showTooltip, hideTooltip);
+    attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
 
   }, [data, width, height, visibleTheatres, colorScale]);
 
@@ -372,26 +466,19 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
     <div
       ref={containerRef}
       className={css({
-        width: "100%",
-        marginTop: "xl",
+        width: LAYOUT_CONFIG.CONTAINER_WIDTH,
+        marginTop: LAYOUT_CONFIG.CONTAINER_MARGIN_TOP
+       
       })}
     >
-      <div className={css({
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: "1rem"
-      })}>
-        <TheatreFilterLegend
-          visibleTheatres={visibleTheatres}
-          toggleTheatre={toggleTheatre}
-          colorScale={colorScale}
-        />
+      <Tools
+        visibleTheatres={visibleTheatres}
+        toggleTheatre={toggleTheatre}
+        colorScale={colorScale}
+        svgRef={svgRef}
+      />
 
-        <ExportButtons svgRef={svgRef} />
-      </div>
-
-      <ReceiptsLegend legendHeightScale={legendHeightScale} />
+      <Legend legendHeightScale={legendHeightScale} />
 
       <svg ref={svgRef}></svg>
 
@@ -400,59 +487,168 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
   );
 }
 
-function TheatreFilterLegend({ visibleTheatres, toggleTheatre, colorScale }) {
+function Tools({ visibleTheatres, toggleTheatre, colorScale, svgRef }) {
+  const buttonStyles = {
+    padding: EXPORT_BUTTON_CONFIG.PADDING,
+    fontSize: EXPORT_BUTTON_CONFIG.FONT_SIZE,
+    fontWeight: EXPORT_BUTTON_CONFIG.FONT_WEIGHT_SEMIBOLD,
+    border: `1px solid ${THEME.BORDER_GREY}`,
+    borderRadius: EXPORT_BUTTON_CONFIG.BORDER_RADIUS,
+    background: THEME.BORDER_WHITE,
+    cursor: "pointer",
+    transition: THEME.TRANSITION,
+    _hover: {
+      background: EXPORT_BUTTON_CONFIG.HOVER_BACKGROUND,
+    }
+  };
+
+  return (
+    <div className={css({
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: LAYOUT_CONFIG.HEADER_MARGIN_BOTTOM
+    })}>
+      <div
+        className={css({
+          display: "flex",
+          gap: LAYOUT_CONFIG.LEGEND_GAP,
+          marginLeft: `${CHART_MARGINS.left}px`,
+          alignItems: "center",
+        })}
+      >
+        {[THEATRES.DRURY_LANE, THEATRES.COVENT_GARDEN].map((theatre) => {
+          const isSelected = visibleTheatres[theatre];
+          const bgColor = isSelected
+            ? hexToRgba(colorScale(theatre), PERFORMANCE_CONFIG.OPACITY)
+            : THEME.BORDER_WHITE;
+
+          return (
+            <label
+              key={theatre}
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                gap: LAYOUT_CONFIG.FILTER_GAP,
+                cursor: "pointer",
+                position: "relative",
+                fontSize: LEGEND_CONFIG.FONT_SIZE,
+                padding: LEGEND_CONFIG.PLAQUE_PADDING,
+                borderRadius: "0",
+                height: `${LEGEND_CONFIG.PLAQUE_HEIGHT}px`,
+                color: isSelected ? THEME.BORDER_WHITE : "black",
+                border: isSelected ? `1px solid ${THEME.BORDER_WHITE}` : `1px solid ${THEME.BORDER_GREY}`,
+                transition: THEME.TRANSITION,
+              })}
+              style={{ backgroundColor: bgColor }}
+            >
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleTheatre(theatre)}
+                className={css({
+                  position: "absolute",
+                  opacity: 0,
+                  cursor: "pointer",
+                })}
+              />
+              <CheckboxIcon isSelected={isSelected} bgColor={bgColor} />
+              <span className={css({ cursor: "pointer", fontWeight: LEGEND_CONFIG.FONT_WEIGHT_SEMIBOLD })}>
+                {theatre}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+
+      <div className={css({
+        display: "flex",
+        gap: EXPORT_BUTTON_CONFIG.GAP,
+        marginRight: `${CHART_MARGINS.right}px`
+      })}>
+        <button
+          onClick={() => exportSVG(svgRef)}
+          className={css(buttonStyles)}
+        >
+          Export SVG
+        </button>
+        <button
+          onClick={() => exportPNG(svgRef)}
+          className={css(buttonStyles)}
+        >
+          Export PNG
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Legend({ legendHeightScale }) {
+  const svgHeight = LEGEND_CONFIG.MAX_HEIGHT + RECEIPTS_LEGEND_CONFIG.SVG_HEIGHT_PADDING;
+
   return (
     <div
       className={css({
         display: "flex",
-        gap: "2rem",
-        marginBottom: "1rem",
+        gap: LAYOUT_CONFIG.RECEIPTS_GAP,
+        marginBottom: LAYOUT_CONFIG.RECEIPTS_MARGIN_BOTTOM,
         marginLeft: `${CHART_MARGINS.left}px`,
         alignItems: "center",
+        fontSize: LEGEND_CONFIG.FONT_SIZE,
       })}
     >
-      {[THEATRES.DRURY_LANE, THEATRES.COVENT_GARDEN].map((theatre) => {
-        const isSelected = visibleTheatres[theatre];
-        const bgColor = isSelected
-          ? hexToRgba(colorScale(theatre), PERFORMANCE_CONFIG.OPACITY)
-          : THEME.BORDER_WHITE;
-
-        return (
-          <label
-            key={theatre}
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              cursor: "pointer",
-              position: "relative",
-              fontSize: LEGEND_CONFIG.FONT_SIZE,
-              padding: LEGEND_CONFIG.PLAQUE_PADDING,
-              borderRadius: "40px",
-              height: `${LEGEND_CONFIG.PLAQUE_HEIGHT}px`,
-              color: isSelected ? THEME.BORDER_WHITE : "black",
-              border: isSelected ? `1px solid ${THEME.BORDER_WHITE}` : `1px solid ${THEME.BORDER_GREY}`,
-              transition: THEME.TRANSITION,
-            })}
-            style={{ backgroundColor: bgColor }}
-          >
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => toggleTheatre(theatre)}
+      <div
+        className={css({
+          display: "flex",
+          gap: LAYOUT_CONFIG.LEGEND_GAP,
+          alignItems: "center",
+        })}
+      >
+        <span className={css({ fontWeight: LEGEND_CONFIG.FONT_WEIGHT_SEMIBOLD, marginRight: LAYOUT_CONFIG.RECEIPTS_LABEL_MARGIN })}>
+          Box office receipts:
+        </span>
+        {legendHeightScale && LEGEND_VALUES.map(({ label, value }) => {
+          const barHeight = legendHeightScale(value);
+          return (
+            <div
+              key={label}
               className={css({
-                position: "absolute",
-                opacity: 0,
-                cursor: "pointer",
+                display: "flex",
+                alignItems: "flex-end",
+                gap: LAYOUT_CONFIG.RECEIPTS_ITEM_GAP,
               })}
-            />
-            <CheckboxIcon isSelected={isSelected} bgColor={bgColor} />
-            <span className={css({ cursor: "pointer", fontWeight: "600" })}>
-              {theatre}
-            </span>
-          </label>
-        );
-      })}
+            >
+              <svg width={RECEIPTS_LEGEND_CONFIG.SVG_WIDTH} height={svgHeight}>
+                <rect
+                  x={RECEIPTS_LEGEND_CONFIG.RECT_X}
+                  y={svgHeight - barHeight}
+                  width={LEGEND_CONFIG.BAR_WIDTH}
+                  height={barHeight}
+                  fill={THEME.FILL_GREY}
+                  opacity={TOOLTIP_CONFIG.OPACITY_VISIBLE}
+                />
+              </svg>
+              <span>{label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        className={css({
+          display: "flex",
+          alignItems: "center",
+          gap: LAYOUT_CONFIG.RECEIPTS_ITEM_GAP,
+          marginLeft: LAYOUT_CONFIG.NO_DATA_MARGIN_LEFT,
+          paddingLeft: LAYOUT_CONFIG.NO_DATA_PADDING_LEFT,
+          borderLeft: `1px solid ${THEME.BORDER_GREY}`,
+        })}
+      >
+        <span className={css({ fontSize: LEGEND_CONFIG.FONT_SIZE, fontWeight: LEGEND_CONFIG.FONT_WEIGHT_BOLD })}>
+          ?
+        </span>
+        <span>No receipt data</span>
+      </div>
     </div>
   );
 }
@@ -488,128 +684,24 @@ function CheckboxIcon({ isSelected, bgColor }) {
   );
 }
 
-function ReceiptsLegend({ legendHeightScale }) {
-  return (
-    <div
-      className={css({
-        display: "flex",
-        gap: "3rem",
-        marginBottom: "2rem",
-        marginLeft: `${CHART_MARGINS.left}px`,
-        alignItems: "center",
-        fontSize: LEGEND_CONFIG.FONT_SIZE,
-      })}
-    >
-      <div
-        className={css({
-          display: "flex",
-          gap: "2rem",
-          alignItems: "center",
-        })}
-      >
-        <span className={css({ fontWeight: "600", marginRight: "0.5rem" })}>
-          Box office receipts:
-        </span>
-        {legendHeightScale && LEGEND_VALUES.map(({ label, value }) => {
-          const barHeight = legendHeightScale(value);
-          return (
-            <div
-              key={label}
-              className={css({
-                display: "flex",
-                alignItems: "flex-end",
-                gap: "0.5rem",
-              })}
-            >
-              <svg width="6" height={LEGEND_CONFIG.MAX_HEIGHT + 4}>
-                <rect
-                  x="2"
-                  y={LEGEND_CONFIG.MAX_HEIGHT + 4 - barHeight}
-                  width={LEGEND_CONFIG.BAR_WIDTH}
-                  height={barHeight}
-                  fill={THEME.FILL_GREY}
-                  opacity={1}
-                />
-              </svg>
-              <span>{label}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-          marginLeft: "1rem",
-          paddingLeft: "1rem",
-          borderLeft: `1px solid ${THEME.BORDER_GREY}`,
-        })}
-      >
-        <span className={css({ fontSize: LEGEND_CONFIG.FONT_SIZE, fontWeight: "600" })}>
-          *
-        </span>
-        <span>No receipt data</span>
-      </div>
-    </div>
-  );
-}
-
 function Tooltip({ tooltipRef }) {
   return (
     <div
       ref={tooltipRef}
       className={css({
         position: "fixed",
-        padding: "0.5rem 0.75rem",
-        background: "rgba(0, 0, 0, 0.85)",
+        padding: TOOLTIP_CONFIG.PADDING,
+        background: TOOLTIP_CONFIG.BACKGROUND,
         color: THEME.BORDER_WHITE,
-        borderRadius: "4px",
-        fontSize: "12px",
+        borderRadius: TOOLTIP_CONFIG.BORDER_RADIUS,
+        fontSize: TOOLTIP_CONFIG.FONT_SIZE,
         pointerEvents: "none",
-        opacity: 0,
-        transition: "opacity 0.2s",
-        zIndex: 1000,
-        lineHeight: "1.4",
+        opacity: TOOLTIP_CONFIG.OPACITY_HIDDEN,
+        transition: TOOLTIP_CONFIG.TRANSITION,
+        zIndex: TOOLTIP_CONFIG.Z_INDEX,
+        lineHeight: TOOLTIP_CONFIG.LINE_HEIGHT,
       })}
     />
   );
 }
 
-function ExportButtons({ svgRef }) {
-  const buttonStyles = {
-    padding: "0.5rem 1rem",
-    fontSize: "14px",
-    fontWeight: "600",
-    border: `1px solid ${THEME.BORDER_GREY}`,
-    borderRadius: "4px",
-    background: THEME.BORDER_WHITE,
-    cursor: "pointer",
-    transition: THEME.TRANSITION,
-    _hover: {
-      background: "#f5f5f5",
-    }
-  };
-
-  return (
-    <div className={css({
-      display: "flex",
-      gap: "0.5rem",
-      marginRight: `${CHART_MARGINS.right}px`
-    })}>
-      <button
-        onClick={() => exportSVG(svgRef)}
-        className={css(buttonStyles)}
-      >
-        Export SVG
-      </button>
-      <button
-        onClick={() => exportPNG(svgRef)}
-        className={css(buttonStyles)}
-      >
-        Export PNG
-      </button>
-    </div>
-  );
-}
