@@ -150,7 +150,7 @@ function Performances() {
    <Description />
     
         </PageWidth>
-        <CalendarOfPerformances data={data} height={3560} />
+        <CalendarOfPerformances data={data} />
         </div>
   );
 }

@@ -8,19 +8,23 @@ const THEATRES = {
 };
 
 const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: "#000",
-  [THEATRES.COVENT_GARDEN]: "#FFF"
+  [THEATRES.DRURY_LANE]: "#F00",
+  [THEATRES.COVENT_GARDEN]: "#000"
 };
+
+const OVERLAY_GREY = "#fc0";
 
 const CHART_MARGINS = {
   top: 50,
-  right: 100,
+  right: 128,
   bottom: 20,
-  left: 80
+  left: 128
 };
 
+const ROW_HEIGHT = 25;
+
 const PERFORMANCE_CONFIG = {
-  OPACITY: 0.5,
+  OPACITY: 1,
   MIN_BAR_HEIGHT: 2,
   BLEND_MODE: 'normal'
 };
@@ -44,7 +48,8 @@ const LEGEND_CONFIG = {
 };
 
 const AXIS_CONFIG = {
-  FONT_SIZE: "12px",
+  FONT_SIZE: "20px",
+  TITLE_FONT_SIZE: "36px",
   YEAR_TICK_INTERVAL: 10,
   YEAR_TICK_OFFSET: 8,
   MONTH_LABEL_Y: -10,
@@ -74,10 +79,17 @@ const TOOLTIP_CONFIG = {
   }
 };
 
+const MAGNIFIER_CONFIG = {
+  RADIUS: 100,
+  ZOOM_LEVEL: 3,
+  BORDER_WIDTH: 3,
+  BORDER_COLOR: "#000"
+};
+
 const THEME = {
   BORDER_GREY: "#ccc",
   FILL_GREY: "#666",
-  AXIS_GREY: "#fff",
+  AXIS_GREY: "#000",
   BORDER_WHITE: "white",
   TRANSITION: "all 0.2s"
 };
@@ -236,6 +248,7 @@ function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth) {
     .call(g => g.select(".domain").attr("stroke", THEME.AXIS_GREY))
     .selectAll("text")
     .style("font-size", AXIS_CONFIG.FONT_SIZE)
+    .attr("text-anchor", "end")
     .attr("dx", labelPadding)
     .attr("dy", yScale.bandwidth() / 2)
     .style("dominant-baseline", "baseline");
@@ -296,10 +309,12 @@ function exportPNG(svgRef, filename = 'calendar-of-performances.png') {
   img.src = url;
 }
 
-export function CalendarOfPerformances({ data, height = 1560 }) {
+export function CalendarOfPerformances({ data }) {
   const svgRef = useRef();
   const containerRef = useRef();
   const tooltipRef = useRef();
+  const magnifierRef = useRef();
+  const chartContentRef = useRef();
 
   const [width, setWidth] = useState(LAYOUT_CONFIG.DEFAULT_WIDTH);
   const [visibleTheatres, setVisibleTheatres] = useState({
@@ -308,6 +323,14 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
   });
 
   const colorScale = useMemo(() => createColorScale(), []);
+
+  const height = useMemo(() => {
+    if (!data || data.length === 0) return 1560;
+    const yearStart = d3.min(data, d => d.year);
+    const yearEnd = d3.max(data, d => d.year);
+    const numYears = yearEnd - yearStart + 1;
+    return (numYears * ROW_HEIGHT) + CHART_MARGINS.top + CHART_MARGINS.bottom;
+  }, [data]);
 
   const legendHeightScale = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -356,6 +379,13 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr("width", width)
       .attr("height", height);
 
+    // Add clip path for magnifier
+    const defs = svg.append("defs");
+    defs.append("clipPath")
+      .attr("id", "magnifier-clip")
+      .append("circle")
+      .attr("r", MAGNIFIER_CONFIG.RADIUS);
+
     const g = svg
       .append("g")
       .attr("transform", `translate(${CHART_MARGINS.left},${CHART_MARGINS.top})`);
@@ -369,8 +399,8 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr("class", "y-axis-title")
       .attr("x", AXIS_CONFIG.Y_AXIS_TITLE_X)
       .attr("y", 0)
-      .attr("text-anchor", "start")
-      .style("font-size", AXIS_CONFIG.FONT_SIZE)
+      .attr("text-anchor", "end")
+      .style("font-size", AXIS_CONFIG.TITLE_FONT_SIZE)
       .style("font-weight", AXIS_CONFIG.TITLE_FONT_WEIGHT)
       .style("font-variant", "small-caps")
       .style("text-transform", "lowercase")
@@ -392,13 +422,16 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .attr("x", 0)
       .attr("y", AXIS_CONFIG.X_AXIS_TITLE_Y)
       .attr("text-anchor", "start")
-      .style("font-size", AXIS_CONFIG.FONT_SIZE)
+      .style("font-size", AXIS_CONFIG.TITLE_FONT_SIZE)
       .style("font-weight", AXIS_CONFIG.TITLE_FONT_WEIGHT)
       .style("font-variant", "small-caps")
       .style("text-transform", "lowercase")
       .text("Month & day");
 
     const performanceData = preparePerformanceData(filteredData);
+
+    // Group performances by day
+    const dayGroups = d3.group(performanceData, d => `${d.year}-${d.dayOfYear}`);
 
     const showTooltip = (event, d) => {
       const dateStr = d.date.toLocaleDateString('en-GB', TOOLTIP_CONFIG.DATE_FORMAT);
@@ -422,8 +455,85 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       d3.select(tooltipRef.current).style('opacity', TOOLTIP_CONFIG.OPACITY_HIDDEN);
     };
 
+    // Process each day and determine what to draw
+    const barsToRender = [];
+    const markersToRender = [];
+
+    dayGroups.forEach((performances) => {
+      if (performances.length === 1) {
+        // Single performance
+        const perf = performances[0];
+        if (perf.currencyValue > 0) {
+          barsToRender.push({
+            ...perf,
+            fill: colorScale(perf.theatre),
+            barHeight: calculateBarHeight(perf.currencyValue, heightScale)
+          });
+        } else {
+          markersToRender.push({
+            ...perf,
+            fill: colorScale(perf.theatre),
+            xOffset: 0
+          });
+        }
+      } else if (performances.length === 2) {
+        // Both theatres performed
+        const [perf1, perf2] = performances;
+        const bothHaveData = perf1.currencyValue > 0 && perf2.currencyValue > 0;
+        const neitherHaveData = perf1.currencyValue === 0 && perf2.currencyValue === 0;
+
+        if (bothHaveData) {
+          // Draw larger bar first, then smaller bar in grey on top
+          const larger = perf1.currencyValue >= perf2.currencyValue ? perf1 : perf2;
+          const smaller = perf1.currencyValue >= perf2.currencyValue ? perf2 : perf1;
+
+          barsToRender.push({
+            ...larger,
+            fill: colorScale(larger.theatre),
+            barHeight: calculateBarHeight(larger.currencyValue, heightScale)
+          });
+
+          barsToRender.push({
+            ...smaller,
+            fill: OVERLAY_GREY,
+            barHeight: calculateBarHeight(smaller.currencyValue, heightScale)
+          });
+        } else if (neitherHaveData) {
+          // Two question marks side by side
+          const dayWidth = getDayWidth(perf1.isLeapYear, innerWidth);
+          markersToRender.push({
+            ...perf1,
+            fill: colorScale(perf1.theatre),
+            xOffset: -dayWidth / 4
+          });
+          markersToRender.push({
+            ...perf2,
+            fill: colorScale(perf2.theatre),
+            xOffset: dayWidth / 4
+          });
+        } else {
+          // One has data, one doesn't
+          const withData = perf1.currencyValue > 0 ? perf1 : perf2;
+          const withoutData = perf1.currencyValue > 0 ? perf2 : perf1;
+
+          barsToRender.push({
+            ...withData,
+            fill: colorScale(withData.theatre),
+            barHeight: calculateBarHeight(withData.currencyValue, heightScale)
+          });
+
+          markersToRender.push({
+            ...withoutData,
+            fill: colorScale(withoutData.theatre),
+            xOffset: 0
+          });
+        }
+      }
+    });
+
+    // Render bars
     const bars = g.selectAll('.performance-bar')
-      .data(performanceData.filter(d => d.currencyValue > 0))
+      .data(barsToRender)
       .join('rect')
       .attr('class', 'performance-bar')
       .attr('x', d => {
@@ -431,27 +541,25 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
         const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
         return xPos - dayWidth / 2;
       })
-      .attr('y', d => {
-        const barHeight = calculateBarHeight(d.currencyValue, heightScale);
-        return calculateBarY(d.year, yScale, barHeight);
-      })
+      .attr('y', d => calculateBarY(d.year, yScale, d.barHeight))
       .attr('width', d => getDayWidth(d.isLeapYear, innerWidth))
-      .attr('height', d => calculateBarHeight(d.currencyValue, heightScale))
-      .attr('fill', d => colorScale(d.theatre))
+      .attr('height', d => d.barHeight)
+      .attr('fill', d => d.fill)
       .attr('opacity', PERFORMANCE_CONFIG.OPACITY)
       .style('mix-blend-mode', PERFORMANCE_CONFIG.BLEND_MODE);
 
     attachTooltipHandlers(bars, showTooltip, hideTooltip);
 
+    // Render question marks
     const noDataMarkers = g.selectAll('.performance-no-data')
-      .data(performanceData.filter(d => d.currencyValue === 0))
+      .data(markersToRender)
       .join('text')
       .attr('class', 'performance-no-data')
-      .attr('x', d => getXPosition(d.dayOfYear, d.isLeapYear, innerWidth))
+      .attr('x', d => getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset)
       .attr('y', d => yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'baseline')
-      .attr('fill', d => colorScale(d.theatre))
+      .attr('fill', d => d.fill)
       .attr('opacity', NO_DATA_CONFIG.OPACITY)
       .attr('font-size', NO_DATA_CONFIG.FONT_SIZE)
       .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
@@ -459,6 +567,106 @@ export function CalendarOfPerformances({ data, height = 1560 }) {
       .style('mix-blend-mode', PERFORMANCE_CONFIG.BLEND_MODE);
 
     attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
+
+    // Create magnifier overlay
+    const magnifier = svg.append("g")
+      .attr("class", "magnifier")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
+    // Background circle for magnifier
+    magnifier.append("circle")
+      .attr("r", MAGNIFIER_CONFIG.RADIUS)
+      .attr("fill", "#f80");
+
+    // Magnifier content group
+    const magnifierContent = magnifier.append("g")
+      .attr("class", "magnifier-content")
+      .attr("clip-path", "url(#magnifier-clip)");
+
+    // Magnifier border
+    magnifier.append("circle")
+      .attr("r", MAGNIFIER_CONFIG.RADIUS)
+      .attr("fill", "none")
+      .attr("stroke", MAGNIFIER_CONFIG.BORDER_COLOR)
+      .attr("stroke-width", MAGNIFIER_CONFIG.BORDER_WIDTH);
+
+    // Function to render magnified bars
+    const renderMagnifiedView = (centerX, centerY) => {
+      magnifierContent.selectAll("*").remove();
+
+      // Calculate the area we're magnifying (in chart coordinates)
+      const chartX = centerX - CHART_MARGINS.left;
+      const chartY = centerY - CHART_MARGINS.top;
+
+      const viewRadius = MAGNIFIER_CONFIG.RADIUS / MAGNIFIER_CONFIG.ZOOM_LEVEL;
+
+      // Filter data to only what's visible in the magnifier
+      const visibleBars = barsToRender.filter(d => {
+        const x = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+        const y = yScale(d.year) + yScale.bandwidth() / 2;
+        const distance = Math.sqrt(Math.pow(x - chartX, 2) + Math.pow(y - chartY, 2));
+        return distance < viewRadius * 1.5; // Slightly larger to avoid edge clipping
+      });
+
+      const visibleMarkers = markersToRender.filter(d => {
+        const x = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset;
+        const y = yScale(d.year) + yScale.bandwidth() / 2;
+        const distance = Math.sqrt(Math.pow(x - chartX, 2) + Math.pow(y - chartY, 2));
+        return distance < viewRadius * 1.5;
+      });
+
+      // Render magnified bars
+      magnifierContent.selectAll('.mag-bar')
+        .data(visibleBars)
+        .join('rect')
+        .attr('class', 'mag-bar')
+        .attr('x', d => {
+          const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
+          const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+          return (xPos - dayWidth / 2 - chartX) * MAGNIFIER_CONFIG.ZOOM_LEVEL;
+        })
+        .attr('y', d => (calculateBarY(d.year, yScale, d.barHeight) - chartY) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
+        .attr('width', d => getDayWidth(d.isLeapYear, innerWidth) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
+        .attr('height', d => d.barHeight * MAGNIFIER_CONFIG.ZOOM_LEVEL)
+        .attr('fill', d => d.fill)
+        .attr('opacity', PERFORMANCE_CONFIG.OPACITY);
+
+      // Render magnified markers
+      magnifierContent.selectAll('.mag-marker')
+        .data(visibleMarkers)
+        .join('text')
+        .attr('class', 'mag-marker')
+        .attr('x', d => (getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset - chartX) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
+        .attr('y', d => (yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET - chartY) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'baseline')
+        .attr('fill', d => d.fill)
+        .attr('opacity', NO_DATA_CONFIG.OPACITY)
+        .attr('font-size', parseFloat(NO_DATA_CONFIG.FONT_SIZE) * MAGNIFIER_CONFIG.ZOOM_LEVEL + 'px')
+        .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
+        .text('?');
+    };
+
+    // Mouse event handlers for magnifier
+    const updateMagnifier = (event) => {
+      const [mouseX, mouseY] = d3.pointer(event, svg.node());
+
+      // Show magnifier
+      magnifier
+        .style("opacity", 1)
+        .attr("transform", `translate(${mouseX}, ${mouseY})`);
+
+      renderMagnifiedView(mouseX, mouseY);
+    };
+
+    const hideMagnifier = () => {
+      magnifier.style("opacity", 0);
+    };
+
+    svg
+      .on("mousemove", updateMagnifier)
+      .on("mouseleave", hideMagnifier);
 
   }, [data, width, height, visibleTheatres, colorScale]);
 
