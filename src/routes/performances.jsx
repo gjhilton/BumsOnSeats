@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarOfPerformances } from "@components/CalendarOfPerformances/CalendarOfPerformances";
 import { css } from "@generated/css";
+import { token } from "@generated/tokens";
 import { useState, useEffect } from "react";
 import * as d3 from "d3";
 
@@ -60,7 +61,7 @@ const Footer = () => (
   <footer className={css({
     fontSize: "1rem",
     lineHeight: "1.6",
-    borderTop: "1px solid #fff",
+    borderTop: `1px solid ${token.var('colors.ink')}`,
     paddingTop: "2rem",
   })}>
     <p>

@@ -6,8 +6,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--colors-paper);
+  color: var(--colors-ink);
   font-size: 16px;
   line-height: 1.6;
   margin: 0;

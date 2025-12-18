@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import { css } from "@generated/css";
+import { token } from "@generated/tokens";
 import { useMagnifier } from "../../hooks/useMagnifier";
 import { Button, LatchButton } from "../Button/Button";
 
@@ -10,11 +11,11 @@ const THEATRES = {
 };
 
 const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: "#E53935",  // Red
-  [THEATRES.COVENT_GARDEN]: "#1E88E5" // Blue
+  [THEATRES.DRURY_LANE]: token.var('colors.theatreA'),
+  [THEATRES.COVENT_GARDEN]: token.var('colors.theatreB')
 };
 
-const OVERLAY_GREY = "#7E3BA6"; // Purple (red + blue)
+const OVERLAY_GREY = token.var('colors.theatresBoth');
 
 const CHART_MARGINS = {
   top: 50,
@@ -90,14 +91,12 @@ const MAGNIFIER_CONFIG = {
   RADIUS: 200,
   ZOOM_LEVEL: 5,
   BORDER_WIDTH: 3,
-  BORDER_COLOR: "#fff"
+  BORDER_COLOR: token.var('colors.ink')
 };
 
 const THEME = {
-  BORDER_GREY: "#ccc",
-  FILL_GREY: "#666",
-  AXIS_GREY: "#000",
-  BORDER_WHITE: "white",
+  AXIS_GREY: token.var('colors.paper'),
+  BORDER_WHITE: token.var('colors.ink'),
   TRANSITION: "all 0.2s"
 };
 
@@ -106,9 +105,8 @@ const EXPORT_BUTTON_CONFIG = {
   FONT_SIZE: "14px",
   FONT_WEIGHT_SEMIBOLD: "600",
   BORDER_RADIUS: "4px",
-  HOVER_BACKGROUND: "#f5f5f5",
   GAP: "0.5rem",
-  CANVAS_BACKGROUND: "white"
+  CANVAS_BACKGROUND: token.var('colors.ink')
 };
 
 const LAYOUT_CONFIG = {
@@ -314,7 +312,7 @@ function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth, minDataYear
     .call(g => g.select(".domain").remove())
     .selectAll("text")
     .style("font-size", AXIS_CONFIG.FONT_SIZE)
-    .style("fill", "#fff")
+    .style("fill", token.var('colors.ink'))
     .attr("text-anchor", "end")
     .attr("dx", labelPadding)
     .attr("dy", yScale.bandwidth() / 2)
@@ -419,7 +417,7 @@ export function CalendarOfPerformances({ data }) {
     ZOOM_LEVEL: MAGNIFIER_CONFIG.ZOOM_LEVEL,
     BORDER_WIDTH: MAGNIFIER_CONFIG.BORDER_WIDTH,
     BORDER_COLOR: MAGNIFIER_CONFIG.BORDER_COLOR,
-    BACKGROUND_COLOR: "#000"
+    BACKGROUND_COLOR: token.var('colors.paper')
   }), []);
 
   const containerStyles = useMemo(() => css({
@@ -509,7 +507,7 @@ export function CalendarOfPerformances({ data }) {
       .attr('y', year => (yScale(year) + yScale.bandwidth() - chartY) * config.ZOOM_LEVEL)
       .text(d => d)
       .style('font-size', `${parseInt(AXIS_CONFIG.FONT_SIZE) * config.ZOOM_LEVEL}px`)
-      .style('fill', '#fff')
+      .style('fill', token.var('colors.ink'))
       .attr('text-anchor', 'end')
       .style('dominant-baseline', 'baseline');
 
@@ -560,7 +558,7 @@ export function CalendarOfPerformances({ data }) {
     svg.append("rect")
       .attr("width", width)
       .attr("height", height)
-      .attr("fill", "#000");
+      .attr("fill", token.var('colors.paper'));
 
     const g = svg
       .append("g")
@@ -580,7 +578,7 @@ export function CalendarOfPerformances({ data }) {
       .text(d => d)
       .style("font-size", AXIS_CONFIG.FONT_SIZE)
       .style("text-anchor", "start")
-      .style("fill", "#fff");
+      .style("fill", token.var('colors.ink'));
 
     // Add x-axis line
     g.append("line")
@@ -589,7 +587,7 @@ export function CalendarOfPerformances({ data }) {
       .attr("x2", innerWidth)
       .attr("y1", 0)
       .attr("y2", 0)
-      .attr("stroke", "#fff")
+      .attr("stroke", token.var('colors.ink'))
       .attr("stroke-width", 3);
 
     const performanceData = preparePerformanceData(filteredData);
@@ -929,36 +927,6 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
   );
 }
 
-function CheckboxIcon({ isSelected, bgColor }) {
-  return (
-    <span
-      className={css({
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: `${LEGEND_CONFIG.CHECKBOX_SIZE}px`,
-        height: `${LEGEND_CONFIG.CHECKBOX_SIZE}px`,
-        border: isSelected ? "1px solid transparent" : `1px solid ${THEME.BORDER_GREY}`,
-        transition: THEME.TRANSITION,
-        flexShrink: 0,
-        cursor: "pointer",
-      })}
-      style={{ backgroundColor: isSelected ? bgColor : THEME.BORDER_WHITE }}
-    >
-      {isSelected && (
-        <svg width={CHECKMARK_ICON.WIDTH} height={CHECKMARK_ICON.HEIGHT} viewBox={CHECKMARK_ICON.VIEWBOX} fill="none">
-          <path
-            d={CHECKMARK_ICON.PATH}
-            stroke={THEME.BORDER_WHITE}
-            strokeWidth={CHECKMARK_ICON.STROKE_WIDTH}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </span>
-  );
-}
 
 function Tooltip({ tooltipRef }) {
   return (

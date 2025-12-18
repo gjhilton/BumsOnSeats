@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
 import { css } from "@generated/css";
+import { token } from "@generated/tokens";
 
 const GITHUB_URL = "https://github.com/gjhilton/BumsOnSeats";
 
@@ -52,10 +53,10 @@ export function Footer() {
       </div>
       <div
         className={css({
-          borderTop: "1px solid #abb8c3",
+          borderTop: `1px solid ${token.var('colors.ink')}`,
           pt: "lg",
           fontSize: "small",
-          color: "gray",
+          color: token.var('colors.ink'),
         })}
       >
         Design and code copyright ©2025 g.j.hilton

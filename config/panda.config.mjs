@@ -22,17 +22,11 @@ export default defineConfig({
         extend: {
             tokens: {
                 colors: {
-                    primary: { value: '#32373c' },
-                    accent: { value: '#cf2e2e' },
-                    cyan: { value: '#0693e3' },
-                    purple: { value: '#9b51e0' },
-                    background: { value: '#ffffff' },
-                    text: { value: '#000000' },
-                    gray: { value: '#abb8c3' },
-                    paper: { value: '#f4f0e8' },
-                    inkBlack: { value: '#1a1614' },
-                    inkFaded: { value: '#3d3734' },
-                    shadowBrown: { value: 'rgba(101, 67, 33, 0.15)' },
+                    ink: { value: '#ffffff' },
+                    paper: { value: '#000000' },
+                    theatreA: { value: '#E53935' },
+                    theatreB: { value: '#1E88E5' },
+                    theatresBoth: { value: '#7E3BA6' },
                 },
                 spacing: {
                     sm: { value: '0.44rem' },

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useMemo } from "react";
 import * as d3 from "d3";
+import { token } from "@generated/tokens";
 
 const DEFAULT_CONFIG = {
   RADIUS: 100,
   ZOOM_LEVEL: 3,
   BORDER_WIDTH: 3,
-  BORDER_COLOR: "#000",
-  BACKGROUND_COLOR: "#f80"
+  BORDER_COLOR: token.var('colors.paper'),
+  BACKGROUND_COLOR: token.var('colors.paper')
 };
 
 /**
