@@ -57,6 +57,27 @@ const Header = () =>  <header>
         </Link>
       </header>
 
+const Footer = () => (
+  <footer className={css({
+    padding: "4rem 8rem",
+    fontSize: "1rem",
+    lineHeight: "1.6",
+    maxWidth: "800px",
+    borderTop: "3px solid #fff",
+    paddingTop: "4rem"
+  })}>
+    <p>
+      All data are copyright the <a href="https://www.theatronomics.com">Theatronomics Project</a> and
+      are used by their kind permission.
+    </p>
+    <p className={css({ fontStyle: "italic", marginTop: "1rem" })}>
+      The code and design for this site is copyright &copy; 2025-6 g.j.hilton
+      / <a href="https://funeralgames.co.uk">Funeral Games</a> and is
+      available on <a href="https://github.com/gjhilton/BumsOnSeats">Github</a>.
+    </p>
+  </footer>
+)
+
 export const Route = createFileRoute("/performances")({
   component: Performances,
 });
@@ -145,6 +166,7 @@ function Performances() {
         <Description />
       </PageWidth>
       <CalendarOfPerformances data={data} />
+      <Footer />
     </div>
   );
 }

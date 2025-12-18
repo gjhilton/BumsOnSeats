@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 const Paper = ({ children }) => (
   <div
     className={css({
+      color: "#000",
       containerType: "inline-size",
       width: "80%",
       maxWidth: "800px",

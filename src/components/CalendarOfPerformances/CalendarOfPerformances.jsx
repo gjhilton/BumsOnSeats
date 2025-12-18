@@ -428,6 +428,12 @@ export function CalendarOfPerformances({ data }) {
     BACKGROUND_COLOR: "#000"
   }), []);
 
+  const containerStyles = useMemo(() => css({
+    width: LAYOUT_CONFIG.CONTAINER_WIDTH,
+    marginTop: LAYOUT_CONFIG.CONTAINER_MARGIN_TOP,
+    paddingBottom: "5rem"
+  }), []);
+
   const toggleTheatre = (theatre) => {
     setVisibleTheatres(prev => ({
       ...prev,
@@ -752,11 +758,7 @@ export function CalendarOfPerformances({ data }) {
   return (
     <div
       ref={containerRef}
-      className={css({
-        width: LAYOUT_CONFIG.CONTAINER_WIDTH,
-        marginTop: LAYOUT_CONFIG.CONTAINER_MARGIN_TOP,
-        paddingBottom: "5rem"
-      })}
+      className={containerStyles}
     >
       <Tools
         visibleTheatres={visibleTheatres}
