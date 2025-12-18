@@ -6,8 +6,7 @@ import * as d3 from "d3";
 
 const PageWidth = ({children}) =>  <div
         className={css({
-          padding: "2rem 8rem",
-          minHeight: "100vh"
+          padding: "2rem 8rem"
         })}
       >
      {children}
@@ -61,10 +60,8 @@ const Footer = () => (
   <footer className={css({
     fontSize: "1rem",
     lineHeight: "1.6",
-    maxWidth: "800px",
-    borderTop: "3px solid #fff",
-    paddingTop: "4rem",
-    marginTop: "4rem"
+    borderTop: "1px solid #fff",
+    paddingTop: "2rem",
   })}>
     <p>
       All data are copyright the <a href="https://www.theatronomics.com">Theatronomics Project</a> and
