@@ -4,10 +4,6 @@ import { processPerformanceData } from "@lib/processPerformanceData";
 import { PerformancesPage } from "./PerformancesPage";
 import { css } from "@generated/css";
 
-/**
- * Data container component for Performances page
- * Handles data fetching, processing, and state management
- */
 export function PerformancesDataContainer() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

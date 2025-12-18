@@ -1,8 +1,3 @@
-/**
- * Process raw CSV performance data into structured format
- * @param {Array} rows - Raw CSV rows
- * @returns {Array} Processed performance data
- */
 export function processPerformanceData(rows) {
   return rows.map(row => {
     const date = new Date(row.Date);
