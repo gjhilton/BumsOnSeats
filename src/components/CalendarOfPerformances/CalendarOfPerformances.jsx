@@ -44,7 +44,7 @@ const NO_DATA_MARKER_CONFIG = {
 const STUB_MARK_STRATEGY = 'FIXED'; // Toggle between 'FIXED' or 'AVERAGE'
 
 const LEGEND_CONFIG = {
-  FONT_SIZE: "12px",
+  FONT_SIZE: "1.5rem",
   CHECKBOX_SIZE: 18,
   MAX_HEIGHT: 20,
   BAR_WIDTH: 2,
@@ -780,7 +780,7 @@ export function CalendarOfPerformances({ data }) {
         svgRef={svgRef}
       />
 
-      <Legend legendHeightScale={legendHeightScale} />
+      <Legend legendHeightScale={legendHeightScale} visibleTheatres={visibleTheatres} width={width} data={data} />
 
       <svg ref={svgRef}></svg>
 
@@ -801,7 +801,7 @@ function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
       <div
         className={css({
           display: "flex",
-          gap: LAYOUT_CONFIG.LEGEND_GAP,
+          gap: "1rem",
           marginLeft: `${CHART_MARGINS.left}px`,
           alignItems: "center",
         })}
@@ -820,7 +820,7 @@ function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
 
       <div className={css({
         display: "flex",
-        gap: EXPORT_BUTTON_CONFIG.GAP,
+        gap: "1rem",
         marginRight: `${CHART_MARGINS.right}px`
       })}>
         <Button onClick={() => exportSVG(svgRef)}>
@@ -834,78 +834,96 @@ function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
   );
 }
 
-function Legend({ legendHeightScale }) {
-  const svgHeight = LEGEND_CONFIG.MAX_HEIGHT + RECEIPTS_LEGEND_CONFIG.SVG_HEIGHT_PADDING;
+function Legend({ legendHeightScale, visibleTheatres, width, data }) {
+  if (!legendHeightScale || !data || data.length === 0) return null;
+
+  const activeTheatres = Object.entries(visibleTheatres)
+    .filter(([, isVisible]) => isVisible)
+    .map(([theatre]) => theatre);
+
+  const innerWidth = width - CHART_MARGINS.left - CHART_MARGINS.right;
+  const dayWidth = getDayWidth(false, innerWidth);
+  const svgHeight = LEGEND_CONFIG.MAX_HEIGHT + 10;
+
+  // Legend values
+  const legendValues = [10, 20, 50, 100, 500, 1000].map(pounds => ({
+    label: `£${pounds}`,
+    value: pounds * CURRENCY_CONVERSION.PENCE_PER_POUND
+  }));
 
   return (
     <div
       className={css({
-        display: "flex",
-        gap: LAYOUT_CONFIG.RECEIPTS_GAP,
-        marginBottom: LAYOUT_CONFIG.RECEIPTS_MARGIN_BOTTOM,
+        marginTop: "2rem",
+        marginBottom: "2rem",
         marginLeft: `${CHART_MARGINS.left}px`,
-        alignItems: "center",
         fontSize: LEGEND_CONFIG.FONT_SIZE,
       })}
     >
+      <div>
+        <span className={css({ fontWeight: LEGEND_CONFIG.FONT_WEIGHT_SEMIBOLD })}>
+          Box office receipts:
+        </span>
+      </div>
       <div
         className={css({
           display: "flex",
-          gap: LAYOUT_CONFIG.LEGEND_GAP,
-          alignItems: "center",
+          gap: "1rem",
+          marginTop: "1rem"
         })}
       >
-        <span className={css({ fontWeight: LEGEND_CONFIG.FONT_WEIGHT_SEMIBOLD, marginRight: LAYOUT_CONFIG.RECEIPTS_LABEL_MARGIN })}>
-          Box office receipts:
-        </span>
-        {legendHeightScale && LEGEND_VALUES.map(({ label, value }) => {
+        {legendValues.map(({ label, value }) => {
           const barHeight = legendHeightScale(value);
+          const svgWidth = dayWidth * activeTheatres.length;
+
           return (
             <div
               key={label}
               className={css({
                 display: "flex",
-                alignItems: "flex-end",
-                gap: LAYOUT_CONFIG.RECEIPTS_ITEM_GAP,
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "0.5rem"
               })}
             >
-              <svg width={RECEIPTS_LEGEND_CONFIG.SVG_WIDTH} height={svgHeight}>
-                <rect
-                  x={RECEIPTS_LEGEND_CONFIG.RECT_X}
-                  y={svgHeight - barHeight}
-                  width={LEGEND_CONFIG.BAR_WIDTH}
-                  height={barHeight}
-                  fill={THEME.FILL_GREY}
-                  opacity={TOOLTIP_CONFIG.OPACITY_VISIBLE}
-                />
+              <svg width={svgWidth} height={svgHeight}>
+                {activeTheatres.map((theatre, index) => (
+                  <rect
+                    key={theatre}
+                    x={index * dayWidth}
+                    y={svgHeight - barHeight}
+                    width={dayWidth}
+                    height={barHeight}
+                    fill={THEATRE_COLORS[theatre]}
+                  />
+                ))}
               </svg>
-              <span>{label}</span>
+              <span className={css({ fontSize: "1rem" })}>{label}</span>
             </div>
           );
         })}
-      </div>
-
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: LAYOUT_CONFIG.RECEIPTS_ITEM_GAP,
-          marginLeft: LAYOUT_CONFIG.NO_DATA_MARGIN_LEFT,
-          paddingLeft: LAYOUT_CONFIG.NO_DATA_PADDING_LEFT,
-          borderLeft: `1px solid ${THEME.BORDER_GREY}`,
-        })}
-      >
-        <svg width="12" height="8">
-          <rect
-            x="2"
-            y="5"
-            width="8"
-            height={NO_DATA_MARKER_CONFIG.HEIGHT}
-            fill={THEME.FILL_GREY}
-            opacity={NO_DATA_MARKER_CONFIG.OPACITY}
-          />
-        </svg>
-        <span>No receipt data</span>
+        <div
+          className={css({
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.5rem"
+          })}
+        >
+          <svg width={dayWidth * activeTheatres.length} height={svgHeight}>
+            {activeTheatres.map((theatre, index) => (
+              <rect
+                key={theatre}
+                x={index * dayWidth}
+                y={svgHeight - 0.5}
+                width={dayWidth}
+                height={0.5}
+                fill={THEATRE_COLORS[theatre]}
+              />
+            ))}
+          </svg>
+          <span className={css({ fontSize: "1rem" })}>No data</span>
+        </div>
       </div>
     </div>
   );

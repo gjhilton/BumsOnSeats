@@ -3,10 +3,12 @@ import { css } from "@generated/css";
 const BUTTON_BASE_STYLES = {
   padding: "0.5rem 1rem",
   fontSize: "1rem",
+  lineHeight: "1.5",
   background: "transparent",
   border: "2px solid",
   cursor: "pointer",
-  borderRadius: 0
+  borderRadius: 0,
+  height: "fit-content"
 };
 
 export const Button = ({ onClick, children }) => (
