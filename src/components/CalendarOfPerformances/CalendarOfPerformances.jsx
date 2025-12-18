@@ -499,6 +499,26 @@ export function CalendarOfPerformances({ data }) {
       .attr('height', d => d.stubHeight * config.ZOOM_LEVEL)
       .attr('fill', d => d.fill)
       .attr('opacity', d => d.stubOpacity);
+
+    // Get unique years from visible data
+    const visibleYears = new Set();
+    visibleBars.forEach(d => visibleYears.add(d.year));
+    visibleMarkers.forEach(d => visibleYears.add(d.year));
+    const yearArray = Array.from(visibleYears).filter(year => year % 5 === 0);
+
+    // Render year labels aligned to the baseline of the bars
+    magnifierContent.selectAll('.mag-year-label')
+      .data(yearArray)
+      .join('text')
+      .attr('class', 'mag-year-label')
+      .attr('x', (-AXIS_CONFIG.LABEL_PADDING - chartX) * config.ZOOM_LEVEL)
+      .attr('y', year => (yScale(year) + yScale.bandwidth() - chartY) * config.ZOOM_LEVEL)
+      .text(d => d)
+      .style('font-size', `${parseInt(AXIS_CONFIG.FONT_SIZE) * config.ZOOM_LEVEL}px`)
+      .style('fill', '#fff')
+      .attr('text-anchor', 'end')
+      .style('dominant-baseline', 'baseline');
+
   }, []);
 
   useEffect(() => {
