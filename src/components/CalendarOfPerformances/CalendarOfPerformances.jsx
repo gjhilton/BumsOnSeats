@@ -846,7 +846,7 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
   const svgHeight = LEGEND_CONFIG.MAX_HEIGHT + 10;
 
   // Legend values
-  const legendValues = [10, 20, 50, 100, 500, 1000].map(pounds => ({
+  const legendValues = [50, 100, 500, 1000].map(pounds => ({
     label: `£${pounds}`,
     value: pounds * CURRENCY_CONVERSION.PENCE_PER_POUND
   }));
