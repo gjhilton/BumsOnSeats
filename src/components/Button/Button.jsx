@@ -1,16 +1,21 @@
 import { css } from "@generated/css";
 
+const BUTTON_BASE_STYLES = {
+  padding: "0.5rem 1rem",
+  fontSize: "1rem",
+  background: "transparent",
+  border: "2px solid",
+  cursor: "pointer",
+  borderRadius: 0
+};
+
 export const Button = ({ onClick, children }) => (
   <button
     onClick={onClick}
     className={css({
-      padding: "0.5rem 1rem",
-      fontSize: "1rem",
-      background: "transparent",
-      border: "2px solid currentColor",
-      color: "inherit",
-      cursor: "pointer",
-      borderRadius: 0
+      ...BUTTON_BASE_STYLES,
+      borderColor: "currentColor",
+      color: "inherit"
     })}
   >
     {children}
@@ -21,16 +26,11 @@ export const LatchButton = ({ checked, onChange, children, color }) => (
   <label
     style={{ '--button-color': color }}
     className={css({
+      ...BUTTON_BASE_STYLES,
       display: "flex",
       alignItems: "center",
       gap: "0.5rem",
-      padding: "0.5rem 1rem",
-      fontSize: "1rem",
-	  fontWeight: 700,
-      border: "2px solid",
-      cursor: "pointer",
-      borderRadius: 0,
-      background: "transparent",
+      fontWeight: 700,
       borderColor: checked ? 'var(--button-color)' : "currentColor",
       color: checked ? 'var(--button-color)' : "inherit",
       opacity: checked ? 1 : 0.25
