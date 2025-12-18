@@ -158,13 +158,6 @@ const CHECKMARK_ICON = {
   STROKE_WIDTH: 2
 };
 
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 function formatCurrency(pence) {
   const pounds = Math.floor(pence / CURRENCY_CONVERSION.PENCE_PER_POUND);
   const remainingPence = pence % CURRENCY_CONVERSION.PENCE_PER_POUND;
@@ -783,7 +776,6 @@ export function CalendarOfPerformances({ data }) {
       <Tools
         visibleTheatres={visibleTheatres}
         toggleTheatre={toggleTheatre}
-        colorScale={colorScale}
         svgRef={svgRef}
       />
 
@@ -796,20 +788,95 @@ export function CalendarOfPerformances({ data }) {
   );
 }
 
-function Tools({ visibleTheatres, toggleTheatre, colorScale, svgRef }) {
-  const buttonStyles = {
-    padding: EXPORT_BUTTON_CONFIG.PADDING,
-    fontSize: EXPORT_BUTTON_CONFIG.FONT_SIZE,
-    fontWeight: EXPORT_BUTTON_CONFIG.FONT_WEIGHT_SEMIBOLD,
-    border: `1px solid ${THEME.BORDER_GREY}`,
-    borderRadius: EXPORT_BUTTON_CONFIG.BORDER_RADIUS,
-    background: THEME.BORDER_WHITE,
-    cursor: "pointer",
-    transition: THEME.TRANSITION,
-    _hover: {
-      background: EXPORT_BUTTON_CONFIG.HOVER_BACKGROUND,
-    }
-  };
+const Button = ({ onClick, children }) => (
+  <button
+    onClick={onClick}
+    className={css({
+      padding: "0.5rem 1rem",
+      fontSize: "1rem",
+      background: "transparent",
+      border: "1px solid currentColor",
+      color: "inherit",
+      cursor: "pointer",
+      borderRadius: 0
+    })}
+  >
+    {children}
+  </button>
+);
+
+const LatchButton = ({ checked, onChange, children, color }) => (
+  <label
+    style={{ '--button-color': color }}
+    className={css({
+      display: "flex",
+      alignItems: "center",
+      gap: "0.5rem",
+      padding: "0.5rem 1rem",
+      fontSize: "1rem",
+      border: "1px solid",
+      cursor: "pointer",
+      borderRadius: 0,
+      background: "transparent",
+      borderColor: checked ? 'var(--button-color)' : "currentColor",
+      color: checked ? 'var(--button-color)' : "inherit",
+      opacity: checked ? 1 : 0.5
+    })}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className={css({
+          display: "none"
+        })}
+      />
+      <span
+        className={css({
+          position: "relative",
+          display: "inline-block",
+          width: "1rem",
+          height: "1rem",
+          ...(checked ? {
+            _after: {
+              content: "''",
+              position: "absolute",
+              left: "20%",
+              top: "50%",
+              width: "40%",
+              height: "70%",
+              borderRight: "2px solid currentColor",
+              borderBottom: "2px solid currentColor",
+              transform: "translate(0, -65%) rotate(45deg)"
+            }
+          } : {
+            _before: {
+              content: "''",
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              width: "100%",
+              height: "2px",
+              background: "currentColor",
+              transform: "translate(-50%, -50%) rotate(45deg)"
+            },
+            _after: {
+              content: "''",
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              width: "100%",
+              height: "2px",
+              background: "currentColor",
+              transform: "translate(-50%, -50%) rotate(-45deg)"
+            }
+          })
+        })}
+      />
+      {children}
+    </label>
+);
+
+function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
 
   return (
     <div className={css({
@@ -826,48 +893,16 @@ function Tools({ visibleTheatres, toggleTheatre, colorScale, svgRef }) {
           alignItems: "center",
         })}
       >
-        {[THEATRES.DRURY_LANE, THEATRES.COVENT_GARDEN].map((theatre) => {
-          const isSelected = visibleTheatres[theatre];
-          const bgColor = isSelected
-            ? hexToRgba(colorScale(theatre), PERFORMANCE_CONFIG.OPACITY)
-            : THEME.BORDER_WHITE;
-
-          return (
-            <label
-              key={theatre}
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: LAYOUT_CONFIG.FILTER_GAP,
-                cursor: "pointer",
-                position: "relative",
-                fontSize: LEGEND_CONFIG.FONT_SIZE,
-                padding: LEGEND_CONFIG.PLAQUE_PADDING,
-                borderRadius: "0",
-                height: `${LEGEND_CONFIG.PLAQUE_HEIGHT}px`,
-                color: isSelected ? THEME.BORDER_WHITE : "black",
-                border: isSelected ? `1px solid ${THEME.BORDER_WHITE}` : `1px solid ${THEME.BORDER_GREY}`,
-                transition: THEME.TRANSITION,
-              })}
-              style={{ backgroundColor: bgColor }}
-            >
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => toggleTheatre(theatre)}
-                className={css({
-                  position: "absolute",
-                  opacity: 0,
-                  cursor: "pointer",
-                })}
-              />
-              <CheckboxIcon isSelected={isSelected} bgColor={bgColor} />
-              <span className={css({ cursor: "pointer", fontWeight: LEGEND_CONFIG.FONT_WEIGHT_SEMIBOLD })}>
-                {theatre}
-              </span>
-            </label>
-          );
-        })}
+        {[THEATRES.DRURY_LANE, THEATRES.COVENT_GARDEN].map((theatre) => (
+          <LatchButton
+            key={theatre}
+            checked={visibleTheatres[theatre]}
+            onChange={() => toggleTheatre(theatre)}
+            color={THEATRE_COLORS[theatre]}
+          >
+            {theatre}
+          </LatchButton>
+        ))}
       </div>
 
       <div className={css({
@@ -875,18 +910,12 @@ function Tools({ visibleTheatres, toggleTheatre, colorScale, svgRef }) {
         gap: EXPORT_BUTTON_CONFIG.GAP,
         marginRight: `${CHART_MARGINS.right}px`
       })}>
-        <button
-          onClick={() => exportSVG(svgRef)}
-          className={css(buttonStyles)}
-        >
+        <Button onClick={() => exportSVG(svgRef)}>
           Export SVG
-        </button>
-        <button
-          onClick={() => exportPNG(svgRef)}
-          className={css(buttonStyles)}
-        >
+        </Button>
+        <Button onClick={() => exportPNG(svgRef)}>
           Export PNG
-        </button>
+        </Button>
       </div>
     </div>
   );
