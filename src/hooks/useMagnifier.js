@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import * as d3 from "d3";
 
 const DEFAULT_CONFIG = {
@@ -32,7 +32,13 @@ export function useMagnifier({
 }) {
   const magnifierRef = useRef(null);
 
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [
+    config.RADIUS,
+    config.ZOOM_LEVEL,
+    config.BORDER_WIDTH,
+    config.BORDER_COLOR,
+    config.BACKGROUND_COLOR
+  ]);
 
   useEffect(() => {
     if (!svgRef.current || !renderMagnifiedContent) return;

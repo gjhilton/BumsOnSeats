@@ -30,12 +30,17 @@ const PERFORMANCE_CONFIG = {
   BLEND_MODE: 'normal'
 };
 
-const NO_DATA_CONFIG = {
-  FONT_SIZE: "4px",
-  OPACITY: 1,
-  BOTTOM_OFFSET: 2,
-  FONT_WEIGHT: 900
+const NO_DATA_MARKER_CONFIG = {
+  HEIGHT: 3,           // Height of the stub mark in pixels
+  WIDTH_FACTOR: 0.6,   // Width as fraction of day width (60% of day column)
+  OPACITY: 0.35,       // Lighter opacity to de-emphasize
+  Y_OFFSET: 0          // Position at baseline (bottom of row)
 };
+
+// Feature flag: Controls stub mark height strategy
+// 'FIXED' = Use fixed 1px height at 100% opacity (minimalist baseline)
+// 'AVERAGE' = Use annual average receipt value to determine height at 35% opacity
+const STUB_MARK_STRATEGY = 'FIXED'; // Toggle between 'FIXED' or 'AVERAGE'
 
 const LEGEND_CONFIG = {
   FONT_SIZE: "12px",
@@ -178,6 +183,72 @@ function preparePerformanceData(data) {
   });
 
   return processedData;
+}
+
+/**
+ * Calculate annual average receipt values per theatre
+ * @param {Array} data - Full dataset of performances
+ * @returns {Map} Map keyed by "theatre-year" (e.g., "Drury Lane-1732")
+ *                with values as average currencyValue
+ */
+function calculateAnnualAverages(data) {
+  const averages = new Map();
+
+  // Group by theatre and year
+  const groups = d3.group(data, d => `${d.theatre}-${d.year}`);
+
+  groups.forEach((performances, key) => {
+    // Filter to only performances with receipt data
+    const withReceipts = performances.filter(p => p.currencyValue > 0);
+
+    if (withReceipts.length > 0) {
+      const sum = d3.sum(withReceipts, p => p.currencyValue);
+      const average = sum / withReceipts.length;
+      averages.set(key, average);
+    } else {
+      // No receipt data for this theatre-year combination
+      averages.set(key, 0);
+    }
+  });
+
+  return averages;
+}
+
+/**
+ * Calculate stub mark height based on selected strategy
+ * @param {Object} performance - Performance object with theatre, year, etc.
+ * @param {Map} annualAverages - Map of theatre-year averages (null if FIXED strategy)
+ * @param {Function} heightScale - D3 scale for converting currency to height
+ * @returns {Object} Object with height and opacity for the stub mark
+ */
+function calculateStubHeight(performance, annualAverages, heightScale) {
+  if (STUB_MARK_STRATEGY === 'FIXED') {
+    return {
+      height: 0.5, // 0.5px thin line
+      opacity: 1.0 // Fully opaque
+    };
+  }
+
+  // AVERAGE strategy
+  const key = `${performance.theatre}-${performance.year}`;
+  const averageValue = annualAverages.get(key) || 0;
+
+  if (averageValue === 0) {
+    // Fallback when no average available
+    return {
+      height: PERFORMANCE_CONFIG.MIN_BAR_HEIGHT, // 2px
+      opacity: NO_DATA_MARKER_CONFIG.OPACITY // 0.35 (de-emphasized)
+    };
+  }
+
+  // Use heightScale to convert average value to pixel height
+  return {
+    height: Math.max(
+      PERFORMANCE_CONFIG.MIN_BAR_HEIGHT,
+      heightScale(averageValue)
+    ),
+    opacity: NO_DATA_MARKER_CONFIG.OPACITY // 0.35 (de-emphasized)
+  };
 }
 
 function createColorScale() {
@@ -398,20 +469,21 @@ export function CalendarOfPerformances({ data }) {
       .attr('fill', d => d.fill)
       .attr('opacity', PERFORMANCE_CONFIG.OPACITY);
 
-    // Render magnified markers
+    // Render magnified stub marks
     magnifierContent.selectAll('.mag-marker')
       .data(visibleMarkers)
-      .join('text')
+      .join('rect')
       .attr('class', 'mag-marker')
-      .attr('x', d => (getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset - chartX) * config.ZOOM_LEVEL)
-      .attr('y', d => (yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET - chartY) * config.ZOOM_LEVEL)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'baseline')
+      .attr('x', d => {
+        const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
+        const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+        return ((xPos - dayWidth / 2 + d.xOffset) - chartX) * config.ZOOM_LEVEL;
+      })
+      .attr('y', d => (yScale(d.year) + yScale.bandwidth() - d.stubHeight - chartY) * config.ZOOM_LEVEL)
+      .attr('width', d => getDayWidth(d.isLeapYear, innerWidth) * config.ZOOM_LEVEL)
+      .attr('height', d => d.stubHeight * config.ZOOM_LEVEL)
       .attr('fill', d => d.fill)
-      .attr('opacity', NO_DATA_CONFIG.OPACITY)
-      .attr('font-size', parseFloat(NO_DATA_CONFIG.FONT_SIZE) * config.ZOOM_LEVEL + 'px')
-      .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
-      .text('?');
+      .attr('opacity', d => d.stubOpacity);
   }, []);
 
   useEffect(() => {
@@ -435,6 +507,11 @@ export function CalendarOfPerformances({ data }) {
     const minDataYear = d3.min(data, d => d.year);
     const yearStart = Math.floor(minDataYear / 10) * 10 - 1;
     const yearEnd = d3.max(data, d => d.year);
+
+    // Calculate annual averages if using AVERAGE strategy
+    const annualAverages = STUB_MARK_STRATEGY === 'AVERAGE'
+      ? calculateAnnualAverages(data)
+      : null;
 
     d3.select(svgRef.current).selectAll("*").remove();
 
@@ -521,10 +598,14 @@ export function CalendarOfPerformances({ data }) {
             barHeight: calculateBarHeight(perf.currencyValue, heightScale)
           });
         } else {
+          const stubProps = calculateStubHeight(perf, annualAverages, heightScale);
+
           markersToRender.push({
             ...perf,
             fill: colorScale(perf.theatre),
-            xOffset: 0
+            xOffset: 0,
+            stubHeight: stubProps.height,
+            stubOpacity: stubProps.opacity
           });
         }
       } else if (performances.length === 2) {
@@ -550,17 +631,24 @@ export function CalendarOfPerformances({ data }) {
             barHeight: calculateBarHeight(smaller.currencyValue, heightScale)
           });
         } else if (neitherHaveData) {
-          // Two question marks side by side
-          const dayWidth = getDayWidth(perf1.isLeapYear, innerWidth);
+          // Calculate stub heights and opacity based on strategy
+          const stubProps1 = calculateStubHeight(perf1, annualAverages, heightScale);
+          const stubProps2 = calculateStubHeight(perf2, annualAverages, heightScale);
+
+          // Two stub marks centered on top of each other (semi-transparent layering)
           markersToRender.push({
             ...perf1,
             fill: colorScale(perf1.theatre),
-            xOffset: -dayWidth / 4
+            xOffset: 0,
+            stubHeight: stubProps1.height,
+            stubOpacity: stubProps1.opacity
           });
           markersToRender.push({
             ...perf2,
             fill: colorScale(perf2.theatre),
-            xOffset: dayWidth / 4
+            xOffset: 0,
+            stubHeight: stubProps2.height,
+            stubOpacity: stubProps2.opacity
           });
         } else {
           // One has data, one doesn't
@@ -573,10 +661,14 @@ export function CalendarOfPerformances({ data }) {
             barHeight: calculateBarHeight(withData.currencyValue, heightScale)
           });
 
+          const stubProps = calculateStubHeight(withoutData, annualAverages, heightScale);
+
           markersToRender.push({
             ...withoutData,
             fill: colorScale(withoutData.theatre),
-            xOffset: 0
+            xOffset: 0,
+            stubHeight: stubProps.height,
+            stubOpacity: stubProps.opacity
           });
         }
       }
@@ -588,7 +680,9 @@ export function CalendarOfPerformances({ data }) {
       markersToRender,
       yScale,
       innerWidth,
-      innerHeight
+      innerHeight,
+      annualAverages,
+      heightScale
     };
 
     // Render bars
@@ -610,20 +704,21 @@ export function CalendarOfPerformances({ data }) {
 
     attachTooltipHandlers(bars, showTooltip, hideTooltip);
 
-    // Render question marks
+    // Render stub marks for performances without receipt data
     const noDataMarkers = g.selectAll('.performance-no-data')
       .data(markersToRender)
-      .join('text')
+      .join('rect')
       .attr('class', 'performance-no-data')
-      .attr('x', d => getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset)
-      .attr('y', d => yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'baseline')
+      .attr('x', d => {
+        const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
+        const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+        return xPos - dayWidth / 2 + d.xOffset;
+      })
+      .attr('y', d => yScale(d.year) + yScale.bandwidth() - d.stubHeight)
+      .attr('width', d => getDayWidth(d.isLeapYear, innerWidth))
+      .attr('height', d => d.stubHeight)
       .attr('fill', d => d.fill)
-      .attr('opacity', NO_DATA_CONFIG.OPACITY)
-      .attr('font-size', NO_DATA_CONFIG.FONT_SIZE)
-      .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
-      .text('?')
+      .attr('opacity', d => d.stubOpacity)
       .style('mix-blend-mode', PERFORMANCE_CONFIG.BLEND_MODE);
 
     attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
@@ -826,9 +921,16 @@ function Legend({ legendHeightScale }) {
           borderLeft: `1px solid ${THEME.BORDER_GREY}`,
         })}
       >
-        <span className={css({ fontSize: LEGEND_CONFIG.FONT_SIZE, fontWeight: LEGEND_CONFIG.FONT_WEIGHT_BOLD })}>
-          ?
-        </span>
+        <svg width="12" height="8">
+          <rect
+            x="2"
+            y="5"
+            width="8"
+            height={NO_DATA_MARKER_CONFIG.HEIGHT}
+            fill={THEME.FILL_GREY}
+            opacity={NO_DATA_MARKER_CONFIG.OPACITY}
+          />
+        </svg>
         <span>No receipt data</span>
       </div>
     </div>
