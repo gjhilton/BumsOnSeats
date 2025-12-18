@@ -125,12 +125,6 @@ const LAYOUT_CONFIG = {
   HEADER_MARGIN_BOTTOM: "1rem"
 };
 
-const RECEIPTS_LEGEND_CONFIG = {
-  SVG_WIDTH: 6,
-  SVG_HEIGHT_PADDING: 4,
-  RECT_X: 2
-};
-
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_START_DAYS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
@@ -141,20 +135,6 @@ const DAYS_IN_REGULAR_YEAR = 365;
 const CURRENCY_CONVERSION = {
   PENCE_PER_POUND: 240,
   PENCE_PER_SHILLING: 12
-};
-
-const LEGEND_VALUES = [
-  { label: '£5', value: 5 * CURRENCY_CONVERSION.PENCE_PER_POUND },
-  { label: '£50', value: 50 * CURRENCY_CONVERSION.PENCE_PER_POUND },
-  { label: '£500', value: 500 * CURRENCY_CONVERSION.PENCE_PER_POUND }
-];
-
-const CHECKMARK_ICON = {
-  WIDTH: 12,
-  HEIGHT: 12,
-  VIEWBOX: "0 0 14 14",
-  PATH: "M2 7L5.5 10.5L12 3",
-  STROKE_WIDTH: 2
 };
 
 function formatCurrency(pence) {
