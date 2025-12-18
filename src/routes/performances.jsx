@@ -59,12 +59,12 @@ const Header = () =>  <header>
 
 const Footer = () => (
   <footer className={css({
-    padding: "4rem 8rem",
     fontSize: "1rem",
     lineHeight: "1.6",
     maxWidth: "800px",
     borderTop: "3px solid #fff",
-    paddingTop: "4rem"
+    paddingTop: "4rem",
+    marginTop: "4rem"
   })}>
     <p>
       All data are copyright the <a href="https://www.theatronomics.com">Theatronomics Project</a> and
@@ -166,7 +166,9 @@ function Performances() {
         <Description />
       </PageWidth>
       <CalendarOfPerformances data={data} />
-      <Footer />
+      <PageWidth>
+        <Footer />
+      </PageWidth>
     </div>
   );
 }
