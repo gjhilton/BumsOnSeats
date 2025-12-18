@@ -3,8 +3,7 @@ import { CalendarOfPerformances } from "@components/CalendarOfPerformances/Calen
 import { css } from "@generated/css";
 import { token } from "@generated/tokens";
 import { html as titleHtml } from "@content/performances/title.md";
-import { html as heroDescriptionHtml } from "@content/performances/hero-description.md";
-import { html as detailDescriptionHtml } from "@content/performances/detail-description.md";
+import { html as descriptionHtml } from "@content/performances/description.md";
 import { html as footerHtml } from "@content/performances/footer.md";
 
 /**
@@ -19,24 +18,6 @@ function PageWidth({ children }) {
     >
       {children}
     </div>
-  );
-}
-
-/**
- * Paragraph component with optional hero styling
- */
-function Paragraph({ children, hero }) {
-  return (
-    <p
-      className={css({
-        fontSize: hero ? "2rem" : "1.5rem",
-        mb: "xl",
-        lineHeight: "1.5",
-        maxWidth: "800px"
-      })}
-    >
-      {children}
-    </p>
   );
 }
 
@@ -84,13 +65,20 @@ export function PerformancesPage({ data }) {
           dangerouslySetInnerHTML={{ __html: titleHtml }}
         />
 
-        <Paragraph hero>
-          <span dangerouslySetInnerHTML={{ __html: heroDescriptionHtml }} />
-        </Paragraph>
-
-        <Paragraph>
-          <span dangerouslySetInnerHTML={{ __html: detailDescriptionHtml }} />
-        </Paragraph>
+        <div
+          className={css({
+            "& p": {
+              fontSize: "1.5rem",
+              mb: "xl",
+              lineHeight: "1.5",
+              maxWidth: "800px"
+            },
+            "& p:first-child": {
+              fontSize: "2rem"
+            }
+          })}
+          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+        />
       </PageWidth>
 
       <CalendarOfPerformances data={data} />
