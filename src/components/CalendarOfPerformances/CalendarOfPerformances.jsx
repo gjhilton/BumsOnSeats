@@ -649,8 +649,8 @@ export function CalendarOfPerformances({ data }) {
       ref={containerRef}
       className={css({
         width: LAYOUT_CONFIG.CONTAINER_WIDTH,
-        marginTop: LAYOUT_CONFIG.CONTAINER_MARGIN_TOP
-       
+        marginTop: LAYOUT_CONFIG.CONTAINER_MARGIN_TOP,
+        paddingBottom: "5rem"
       })}
     >
       <Tools

@@ -101,17 +101,18 @@ export function useMagnifier({
 
     // Touch event handlers
     const handleTouchStart = (event) => {
-      event.preventDefault(); // Prevent scrolling
-      updateMagnifier(event.touches[0]);
+      if (event.touches.length === 1) {
+        updateMagnifier(event.touches[0]);
+      }
     };
 
     const handleTouchMove = (event) => {
-      event.preventDefault(); // Prevent scrolling
-      updateMagnifier(event.touches[0]);
+      if (event.touches.length === 1) {
+        updateMagnifier(event.touches[0]);
+      }
     };
 
-    const handleTouchEnd = (event) => {
-      event.preventDefault();
+    const handleTouchEnd = () => {
       hideMagnifier();
     };
 
@@ -120,12 +121,12 @@ export function useMagnifier({
       .on("mousemove", updateMagnifier)
       .on("mouseleave", hideMagnifier);
 
-    // Attach touch events
+    // Attach touch events - using passive: true to allow scrolling
     const svgNode = svg.node();
-    svgNode.addEventListener("touchstart", handleTouchStart, { passive: false });
-    svgNode.addEventListener("touchmove", handleTouchMove, { passive: false });
-    svgNode.addEventListener("touchend", handleTouchEnd, { passive: false });
-    svgNode.addEventListener("touchcancel", handleTouchEnd, { passive: false });
+    svgNode.addEventListener("touchstart", handleTouchStart, { passive: true });
+    svgNode.addEventListener("touchmove", handleTouchMove, { passive: true });
+    svgNode.addEventListener("touchend", handleTouchEnd, { passive: true });
+    svgNode.addEventListener("touchcancel", handleTouchEnd, { passive: true });
 
     // Cleanup function
     return () => {
