@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import { css } from "@generated/css";
+import { useMagnifier } from "../../hooks/useMagnifier";
 
 const THEATRES = {
   DRURY_LANE: "Drury Lane",
@@ -313,8 +314,13 @@ export function CalendarOfPerformances({ data }) {
   const svgRef = useRef();
   const containerRef = useRef();
   const tooltipRef = useRef();
-  const magnifierRef = useRef();
-  const chartContentRef = useRef();
+  const renderDataRef = useRef({
+    barsToRender: [],
+    markersToRender: [],
+    yScale: null,
+    innerWidth: 0,
+    innerHeight: 0
+  });
 
   const [width, setWidth] = useState(LAYOUT_CONFIG.DEFAULT_WIDTH);
   const [visibleTheatres, setVisibleTheatres] = useState({
@@ -343,6 +349,65 @@ export function CalendarOfPerformances({ data }) {
       [theatre]: !prev[theatre]
     }));
   };
+
+  // Callback for rendering magnified content
+  const renderMagnifiedContent = useCallback((magnifierContent, centerX, centerY, config) => {
+    const { barsToRender, markersToRender, yScale, innerWidth } = renderDataRef.current;
+
+    if (!yScale || !innerWidth) return;
+
+    // Calculate the area we're magnifying (in chart coordinates)
+    const chartX = centerX - CHART_MARGINS.left;
+    const chartY = centerY - CHART_MARGINS.top;
+
+    const viewRadius = config.RADIUS / config.ZOOM_LEVEL;
+
+    // Filter data to only what's visible in the magnifier
+    const visibleBars = barsToRender.filter(d => {
+      const x = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+      const y = yScale(d.year) + yScale.bandwidth() / 2;
+      const distance = Math.sqrt(Math.pow(x - chartX, 2) + Math.pow(y - chartY, 2));
+      return distance < viewRadius * 1.5; // Slightly larger to avoid edge clipping
+    });
+
+    const visibleMarkers = markersToRender.filter(d => {
+      const x = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset;
+      const y = yScale(d.year) + yScale.bandwidth() / 2;
+      const distance = Math.sqrt(Math.pow(x - chartX, 2) + Math.pow(y - chartY, 2));
+      return distance < viewRadius * 1.5;
+    });
+
+    // Render magnified bars
+    magnifierContent.selectAll('.mag-bar')
+      .data(visibleBars)
+      .join('rect')
+      .attr('class', 'mag-bar')
+      .attr('x', d => {
+        const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
+        const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
+        return (xPos - dayWidth / 2 - chartX) * config.ZOOM_LEVEL;
+      })
+      .attr('y', d => (calculateBarY(d.year, yScale, d.barHeight) - chartY) * config.ZOOM_LEVEL)
+      .attr('width', d => getDayWidth(d.isLeapYear, innerWidth) * config.ZOOM_LEVEL)
+      .attr('height', d => d.barHeight * config.ZOOM_LEVEL)
+      .attr('fill', d => d.fill)
+      .attr('opacity', PERFORMANCE_CONFIG.OPACITY);
+
+    // Render magnified markers
+    magnifierContent.selectAll('.mag-marker')
+      .data(visibleMarkers)
+      .join('text')
+      .attr('class', 'mag-marker')
+      .attr('x', d => (getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset - chartX) * config.ZOOM_LEVEL)
+      .attr('y', d => (yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET - chartY) * config.ZOOM_LEVEL)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'baseline')
+      .attr('fill', d => d.fill)
+      .attr('opacity', NO_DATA_CONFIG.OPACITY)
+      .attr('font-size', parseFloat(NO_DATA_CONFIG.FONT_SIZE) * config.ZOOM_LEVEL + 'px')
+      .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
+      .text('?');
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -378,13 +443,6 @@ export function CalendarOfPerformances({ data }) {
       .select(svgRef.current)
       .attr("width", width)
       .attr("height", height);
-
-    // Add clip path for magnifier
-    const defs = svg.append("defs");
-    defs.append("clipPath")
-      .attr("id", "magnifier-clip")
-      .append("circle")
-      .attr("r", MAGNIFIER_CONFIG.RADIUS);
 
     const g = svg
       .append("g")
@@ -531,6 +589,15 @@ export function CalendarOfPerformances({ data }) {
       }
     });
 
+    // Store render data for magnifier
+    renderDataRef.current = {
+      barsToRender,
+      markersToRender,
+      yScale,
+      innerWidth,
+      innerHeight
+    };
+
     // Render bars
     const bars = g.selectAll('.performance-bar')
       .data(barsToRender)
@@ -568,107 +635,21 @@ export function CalendarOfPerformances({ data }) {
 
     attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
 
-    // Create magnifier overlay
-    const magnifier = svg.append("g")
-      .attr("class", "magnifier")
-      .style("pointer-events", "none")
-      .style("opacity", 0);
-
-    // Background circle for magnifier
-    magnifier.append("circle")
-      .attr("r", MAGNIFIER_CONFIG.RADIUS)
-      .attr("fill", "#f80");
-
-    // Magnifier content group
-    const magnifierContent = magnifier.append("g")
-      .attr("class", "magnifier-content")
-      .attr("clip-path", "url(#magnifier-clip)");
-
-    // Magnifier border
-    magnifier.append("circle")
-      .attr("r", MAGNIFIER_CONFIG.RADIUS)
-      .attr("fill", "none")
-      .attr("stroke", MAGNIFIER_CONFIG.BORDER_COLOR)
-      .attr("stroke-width", MAGNIFIER_CONFIG.BORDER_WIDTH);
-
-    // Function to render magnified bars
-    const renderMagnifiedView = (centerX, centerY) => {
-      magnifierContent.selectAll("*").remove();
-
-      // Calculate the area we're magnifying (in chart coordinates)
-      const chartX = centerX - CHART_MARGINS.left;
-      const chartY = centerY - CHART_MARGINS.top;
-
-      const viewRadius = MAGNIFIER_CONFIG.RADIUS / MAGNIFIER_CONFIG.ZOOM_LEVEL;
-
-      // Filter data to only what's visible in the magnifier
-      const visibleBars = barsToRender.filter(d => {
-        const x = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
-        const y = yScale(d.year) + yScale.bandwidth() / 2;
-        const distance = Math.sqrt(Math.pow(x - chartX, 2) + Math.pow(y - chartY, 2));
-        return distance < viewRadius * 1.5; // Slightly larger to avoid edge clipping
-      });
-
-      const visibleMarkers = markersToRender.filter(d => {
-        const x = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset;
-        const y = yScale(d.year) + yScale.bandwidth() / 2;
-        const distance = Math.sqrt(Math.pow(x - chartX, 2) + Math.pow(y - chartY, 2));
-        return distance < viewRadius * 1.5;
-      });
-
-      // Render magnified bars
-      magnifierContent.selectAll('.mag-bar')
-        .data(visibleBars)
-        .join('rect')
-        .attr('class', 'mag-bar')
-        .attr('x', d => {
-          const dayWidth = getDayWidth(d.isLeapYear, innerWidth);
-          const xPos = getXPosition(d.dayOfYear, d.isLeapYear, innerWidth);
-          return (xPos - dayWidth / 2 - chartX) * MAGNIFIER_CONFIG.ZOOM_LEVEL;
-        })
-        .attr('y', d => (calculateBarY(d.year, yScale, d.barHeight) - chartY) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
-        .attr('width', d => getDayWidth(d.isLeapYear, innerWidth) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
-        .attr('height', d => d.barHeight * MAGNIFIER_CONFIG.ZOOM_LEVEL)
-        .attr('fill', d => d.fill)
-        .attr('opacity', PERFORMANCE_CONFIG.OPACITY);
-
-      // Render magnified markers
-      magnifierContent.selectAll('.mag-marker')
-        .data(visibleMarkers)
-        .join('text')
-        .attr('class', 'mag-marker')
-        .attr('x', d => (getXPosition(d.dayOfYear, d.isLeapYear, innerWidth) + d.xOffset - chartX) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
-        .attr('y', d => (yScale(d.year) + yScale.bandwidth() - NO_DATA_CONFIG.BOTTOM_OFFSET - chartY) * MAGNIFIER_CONFIG.ZOOM_LEVEL)
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', 'baseline')
-        .attr('fill', d => d.fill)
-        .attr('opacity', NO_DATA_CONFIG.OPACITY)
-        .attr('font-size', parseFloat(NO_DATA_CONFIG.FONT_SIZE) * MAGNIFIER_CONFIG.ZOOM_LEVEL + 'px')
-        .attr('font-weight', NO_DATA_CONFIG.FONT_WEIGHT)
-        .text('?');
-    };
-
-    // Mouse event handlers for magnifier
-    const updateMagnifier = (event) => {
-      const [mouseX, mouseY] = d3.pointer(event, svg.node());
-
-      // Show magnifier
-      magnifier
-        .style("opacity", 1)
-        .attr("transform", `translate(${mouseX}, ${mouseY})`);
-
-      renderMagnifiedView(mouseX, mouseY);
-    };
-
-    const hideMagnifier = () => {
-      magnifier.style("opacity", 0);
-    };
-
-    svg
-      .on("mousemove", updateMagnifier)
-      .on("mouseleave", hideMagnifier);
-
   }, [data, width, height, visibleTheatres, colorScale]);
+
+  // Use magnifier hook
+  useMagnifier({
+    svgRef,
+    renderMagnifiedContent,
+    config: {
+      RADIUS: MAGNIFIER_CONFIG.RADIUS,
+      ZOOM_LEVEL: MAGNIFIER_CONFIG.ZOOM_LEVEL,
+      BORDER_WIDTH: MAGNIFIER_CONFIG.BORDER_WIDTH,
+      BORDER_COLOR: MAGNIFIER_CONFIG.BORDER_COLOR,
+      BACKGROUND_COLOR: "#f80"
+    },
+    dependencies: [data, width, height, visibleTheatres]
+  });
 
   return (
     <div
