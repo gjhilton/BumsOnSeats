@@ -53,7 +53,7 @@ const AXIS_CONFIG = {
   TITLE_FONT_SIZE: "36px",
   YEAR_TICK_INTERVAL: 10,
   YEAR_TICK_OFFSET: 8,
-  MONTH_LABEL_Y: -10,
+  MONTH_LABEL_Y: -18,
   LABEL_PADDING: 8,
   TITLE_FONT_WEIGHT: 900,
   Y_AXIS_TITLE_X: -50,
@@ -81,8 +81,8 @@ const TOOLTIP_CONFIG = {
 };
 
 const MAGNIFIER_CONFIG = {
-  RADIUS: 100,
-  ZOOM_LEVEL: 3,
+  RADIUS: 200,
+  ZOOM_LEVEL: 5,
   BORDER_WIDTH: 3,
   BORDER_COLOR: "#000"
 };
@@ -235,7 +235,7 @@ function calculateBarY(year, yScale, barHeight) {
   return yScale(year) + yScale.bandwidth() - barHeight;
 }
 
-function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth) {
+function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth, minDataYear) {
   const isLeft = axisPosition === 'left';
   const axis = isLeft ? d3.axisLeft(yScale) : d3.axisRight(yScale);
   const transform = isLeft ? null : `translate(${innerWidth}, 0)`;
@@ -246,13 +246,18 @@ function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth) {
 
   return axisGroup
     .call(axis.tickValues(tickYears).tickSize(0))
-    .call(g => g.select(".domain").attr("stroke", THEME.AXIS_GREY))
+    .call(g => g.select(".domain").remove())
     .selectAll("text")
     .style("font-size", AXIS_CONFIG.FONT_SIZE)
     .attr("text-anchor", "end")
     .attr("dx", labelPadding)
     .attr("dy", yScale.bandwidth() / 2)
-    .style("dominant-baseline", "baseline");
+    .style("dominant-baseline", "baseline")
+    .style("opacity", d => {
+      if (d % 5 !== 0) return 0; // Hide non-multiples of 5
+      if (d < minDataYear) return 0.2; // Show multiples of 5 before data at 20%
+      return 1; // Show multiples of 5 with data at 100%
+    });
 }
 
 function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
@@ -332,7 +337,7 @@ export function CalendarOfPerformances({ data }) {
 
   const height = useMemo(() => {
     if (!data || data.length === 0) return 1560;
-    const yearStart = d3.min(data, d => d.year);
+    const yearStart = Math.floor(d3.min(data, d => d.year) / 10) * 10 - 1;
     const yearEnd = d3.max(data, d => d.year);
     const numYears = yearEnd - yearStart + 1;
     return (numYears * ROW_HEIGHT) + CHART_MARGINS.top + CHART_MARGINS.bottom;
@@ -427,7 +432,8 @@ export function CalendarOfPerformances({ data }) {
 
     const filteredData = data.filter(d => visibleTheatres[d.theatre]);
 
-    const yearStart = d3.min(data, d => d.year);
+    const minDataYear = d3.min(data, d => d.year);
+    const yearStart = Math.floor(minDataYear / 10) * 10 - 1;
     const yearEnd = d3.max(data, d => d.year);
 
     d3.select(svgRef.current).selectAll("*").remove();
@@ -448,21 +454,9 @@ export function CalendarOfPerformances({ data }) {
       .append("g")
       .attr("transform", `translate(${CHART_MARGINS.left},${CHART_MARGINS.top})`);
 
-    const firstTickYear = Math.ceil((yearStart + AXIS_CONFIG.YEAR_TICK_OFFSET) / AXIS_CONFIG.YEAR_TICK_INTERVAL) * AXIS_CONFIG.YEAR_TICK_INTERVAL;
-    const tickYears = d3.range(firstTickYear, yearEnd + 1, AXIS_CONFIG.YEAR_TICK_INTERVAL);
+    const tickYears = d3.range(yearStart, yearEnd + 1);
 
-    renderYAxis(g, yScale, tickYears, 'left', innerWidth);
-
-    g.append("text")
-      .attr("class", "y-axis-title")
-      .attr("x", AXIS_CONFIG.Y_AXIS_TITLE_X)
-      .attr("y", 0)
-      .attr("text-anchor", "end")
-      .style("font-size", AXIS_CONFIG.TITLE_FONT_SIZE)
-      .style("font-weight", AXIS_CONFIG.TITLE_FONT_WEIGHT)
-      .style("font-variant", "small-caps")
-      .style("text-transform", "lowercase")
-      .text("Year");
+    renderYAxis(g, yScale, tickYears, 'left', innerWidth, minDataYear);
 
     g.append("g")
       .selectAll(".month-label")
@@ -475,16 +469,15 @@ export function CalendarOfPerformances({ data }) {
       .style("font-size", AXIS_CONFIG.FONT_SIZE)
       .style("text-anchor", "start");
 
-    g.append("text")
-      .attr("class", "x-axis-title")
-      .attr("x", 0)
-      .attr("y", AXIS_CONFIG.X_AXIS_TITLE_Y)
-      .attr("text-anchor", "start")
-      .style("font-size", AXIS_CONFIG.TITLE_FONT_SIZE)
-      .style("font-weight", AXIS_CONFIG.TITLE_FONT_WEIGHT)
-      .style("font-variant", "small-caps")
-      .style("text-transform", "lowercase")
-      .text("Month & day");
+    // Add x-axis line
+    g.append("line")
+      .attr("class", "x-axis-line")
+      .attr("x1", 0)
+      .attr("x2", innerWidth)
+      .attr("y1", 0)
+      .attr("y2", 0)
+      .attr("stroke", THEME.AXIS_GREY)
+      .attr("stroke-width", 3);
 
     const performanceData = preparePerformanceData(filteredData);
 
