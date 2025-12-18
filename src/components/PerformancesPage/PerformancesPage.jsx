@@ -4,21 +4,7 @@ import { css } from "@generated/css";
 import { html as titleHtml } from "@content/performances/title.md";
 import { html as descriptionHtml } from "@content/performances/description.md";
 
-export function PerformancesPage({ data }) {
-  return (
-    <PageLayout>
-      <PageWidth>
-        <h1
-          className={css({
-            fontSize: "5rem",
-            mb: "lg",
-            fontWeight: "normal",
-            lineHeight: "1.1",
-            marginTop: "2rem",
-          })}
-          dangerouslySetInnerHTML={{ __html: titleHtml }}
-        />
-
+const PageContent = ({html}) => <PageWidth>
         <div
           className={css({
             "& p": {
@@ -33,8 +19,27 @@ export function PerformancesPage({ data }) {
           })}
           dangerouslySetInnerHTML={{ __html: descriptionHtml }}
         />
-      </PageWidth>
+</PageWidth>
 
+const PageTitle = ({children}) =>  
+<PageWidth>
+<h1
+          className={css({
+            fontSize: "5rem",
+            mb: "lg",
+            fontWeight: "normal",
+            lineHeight: "1.1",
+            marginTop: "2rem",
+          })}
+          dangerouslySetInnerHTML={{ __html: titleHtml }}
+        />
+		</PageWidth>
+
+export function PerformancesPage({ data }) {
+  return (
+    <PageLayout>
+       <PageTitle html={titleHtml}>
+		<PageContent html={descriptionHtml} />
       <CalendarOfPerformances data={data} />
     </PageLayout>
   );
