@@ -3,6 +3,35 @@ import { css } from "@generated/css";
 import { token } from "@generated/tokens";
 import { html as footerHtml } from "@content/site/footer.md";
 
+export const PageContent = ({html}) => <PageWidth>
+        <div
+          className={css({
+            "& p": {
+              fontSize: "1.5rem",
+              mb: "xl",
+              lineHeight: "1.5",
+              maxWidth: "800px"
+            },
+            "& p:first-child": {
+              fontSize: "2rem"
+            }
+          })}
+          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+        />
+</PageWidth>
+
+const PageTitle = ({children}) =>  
+<h1
+          className={css({
+            fontSize: "5rem",
+            mb: "lg",
+            fontWeight: "normal",
+            lineHeight: "1.1",
+            marginTop: "2rem",
+          })}>
+          {children}
+        </h1>
+
 export function PageWidth({ children }) {
   return (
     <div
@@ -48,13 +77,13 @@ function Footer() {
   );
 }
 
-export function PageLayout({ children }) {
+export function PageLayout({ title, children }) {
   return (
     <div>
       <PageWidth>
         <Header />
+		<PageTitle>{title}</PageTitle>
       </PageWidth>
-
       {children}
 
       <PageWidth>
