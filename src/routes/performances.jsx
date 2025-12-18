@@ -23,19 +23,17 @@ const Paragraph = ({children, hero}) =>  <p
         className={css({
           fontSize: hero ? "2rem" : "1.5rem",
           mb: "xl",
-          color: "text",
           lineHeight: "1.5",
           maxWidth: "800px"
         })}
       >
      {children}
-      </p> 
+      </p>
 
-const Title = ({children}) =>       <h1
+const Title = () =>       <h1
         className={css({
           fontSize: "5rem",
           mb: "lg",
-          color: "text",
           fontWeight: "normal",
           lineHeight: "1.1",
           marginTop: "2rem",
@@ -44,13 +42,10 @@ const Title = ({children}) =>       <h1
         <b>Calendar</b><span> of Performances &amp; Receipts (1732-1809)</span>
       </h1>
 
-const Header = () =>  <header className={css({
-       
-      })}>
+const Header = () =>  <header>
         <Link
           to="/"
           className={css({
-            color: "text",
             textDecoration: "none !important",
             fontSize: "2rem",
             _hover: {
@@ -113,7 +108,7 @@ function Performances() {
 
   if (loading) {
     return (
-      <div className={css({ padding: "2rem", background: "#fc0", minHeight: "100vh" })}>
+      <div className={css({ padding: "2rem", minHeight: "100vh" })}>
         <h1 className={css({ fontSize: "xlarge", mb: "lg" })}>
           Loading performance data...
         </h1>
@@ -123,7 +118,7 @@ function Performances() {
 
   if (error) {
     return (
-      <div className={css({ padding: "2rem", background: "#FFF", minHeight: "100vh" })}>
+      <div className={css({ padding: "2rem", minHeight: "100vh" })}>
         <h1 className={css({ fontSize: "xlarge", mb: "lg", color: "accent" })}>
           Error loading data
         </h1>
@@ -134,7 +129,7 @@ function Performances() {
 
   if (!data) {
     return (
-      <div className={css({ padding: "2rem", background: "#fc0", minHeight: "100vh" })}>
+      <div className={css({ padding: "2rem", minHeight: "100vh" })}>
         <h1 className={css({ fontSize: "xlarge", mb: "lg" })}>
           No data available
         </h1>
@@ -143,14 +138,13 @@ function Performances() {
   }
 
   return (
-    <div className={css({background: "#f80" })}>
-   <PageWidth>
-     <Header />
-     <Title />
-   <Description />
-    
-        </PageWidth>
-        <CalendarOfPerformances data={data} />
-        </div>
+    <div>
+      <PageWidth>
+        <Header />
+        <Title />
+        <Description />
+      </PageWidth>
+      <CalendarOfPerformances data={data} />
+    </div>
   );
 }

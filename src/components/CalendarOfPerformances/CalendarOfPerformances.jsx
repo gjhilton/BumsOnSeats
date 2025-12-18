@@ -9,11 +9,11 @@ const THEATRES = {
 };
 
 const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: "#F00",
-  [THEATRES.COVENT_GARDEN]: "#000"
+  [THEATRES.DRURY_LANE]: "#E53935",  // Red
+  [THEATRES.COVENT_GARDEN]: "#1E88E5" // Blue
 };
 
-const OVERLAY_GREY = "#fc0";
+const OVERLAY_GREY = "#7E3BA6"; // Purple (red + blue)
 
 const CHART_MARGINS = {
   top: 50,
@@ -89,7 +89,7 @@ const MAGNIFIER_CONFIG = {
   RADIUS: 200,
   ZOOM_LEVEL: 5,
   BORDER_WIDTH: 3,
-  BORDER_COLOR: "#000"
+  BORDER_COLOR: "#fff"
 };
 
 const THEME = {
@@ -320,6 +320,7 @@ function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth, minDataYear
     .call(g => g.select(".domain").remove())
     .selectAll("text")
     .style("font-size", AXIS_CONFIG.FONT_SIZE)
+    .style("fill", "#fff")
     .attr("text-anchor", "end")
     .attr("dx", labelPadding)
     .attr("dy", yScale.bandwidth() / 2)
@@ -418,6 +419,14 @@ export function CalendarOfPerformances({ data }) {
     if (!data || data.length === 0) return null;
     return createHeightScale(d3.max(data, d => d.currencyValue), LEGEND_CONFIG.MAX_HEIGHT);
   }, [data]);
+
+  const magnifierConfig = useMemo(() => ({
+    RADIUS: MAGNIFIER_CONFIG.RADIUS,
+    ZOOM_LEVEL: MAGNIFIER_CONFIG.ZOOM_LEVEL,
+    BORDER_WIDTH: MAGNIFIER_CONFIG.BORDER_WIDTH,
+    BORDER_COLOR: MAGNIFIER_CONFIG.BORDER_COLOR,
+    BACKGROUND_COLOR: "#000"
+  }), []);
 
   const toggleTheatre = (theatre) => {
     setVisibleTheatres(prev => ({
@@ -527,6 +536,12 @@ export function CalendarOfPerformances({ data }) {
       .attr("width", width)
       .attr("height", height);
 
+    // Add black background
+    svg.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "#000");
+
     const g = svg
       .append("g")
       .attr("transform", `translate(${CHART_MARGINS.left},${CHART_MARGINS.top})`);
@@ -544,7 +559,8 @@ export function CalendarOfPerformances({ data }) {
       .attr("y", AXIS_CONFIG.MONTH_LABEL_Y)
       .text(d => d)
       .style("font-size", AXIS_CONFIG.FONT_SIZE)
-      .style("text-anchor", "start");
+      .style("text-anchor", "start")
+      .style("fill", "#fff");
 
     // Add x-axis line
     g.append("line")
@@ -553,7 +569,7 @@ export function CalendarOfPerformances({ data }) {
       .attr("x2", innerWidth)
       .attr("y1", 0)
       .attr("y2", 0)
-      .attr("stroke", THEME.AXIS_GREY)
+      .attr("stroke", "#fff")
       .attr("stroke-width", 3);
 
     const performanceData = preparePerformanceData(filteredData);
@@ -729,13 +745,7 @@ export function CalendarOfPerformances({ data }) {
   useMagnifier({
     svgRef,
     renderMagnifiedContent,
-    config: {
-      RADIUS: MAGNIFIER_CONFIG.RADIUS,
-      ZOOM_LEVEL: MAGNIFIER_CONFIG.ZOOM_LEVEL,
-      BORDER_WIDTH: MAGNIFIER_CONFIG.BORDER_WIDTH,
-      BORDER_COLOR: MAGNIFIER_CONFIG.BORDER_COLOR,
-      BACKGROUND_COLOR: "#f80"
-    },
+    config: magnifierConfig,
     dependencies: [data, width, height, visibleTheatres]
   });
 

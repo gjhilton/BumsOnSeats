@@ -32,13 +32,7 @@ export function useMagnifier({
 }) {
   const magnifierRef = useRef(null);
 
-  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [
-    config.RADIUS,
-    config.ZOOM_LEVEL,
-    config.BORDER_WIDTH,
-    config.BORDER_COLOR,
-    config.BACKGROUND_COLOR
-  ]);
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
 
   useEffect(() => {
     if (!svgRef.current || !renderMagnifiedContent) return;
