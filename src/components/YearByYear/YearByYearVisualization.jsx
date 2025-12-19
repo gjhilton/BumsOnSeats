@@ -544,7 +544,7 @@ export const YearByYearVisualization = ({ data }) => {
   const noneSelected = !includeOrdinary && !includeCommand && !includeBenefit;
 
   return (
-    <div ref={containerRef} className={css({ width: "100%" })}>
+    <div className={css({ width: "100%" })}>
       <PageWidth>
         <div className={css({ display: "flex", gap: "md", mb: "lg" })}>
           <LatchButton
@@ -585,20 +585,40 @@ export const YearByYearVisualization = ({ data }) => {
       </PageWidth>
       {!noneSelected && (
         <PageWidth>
-          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
-            Revenue Distribution
-          </h2>
-          <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5", maxWidth: "800px" })}>
-            <p className={css({ mb: "sm" })}>
-              Each box and whisker shows the distribution of revenue per performance for each year:
-            </p>
-            <ul className={css({ mb: "md", ml: 0, pl: 0, listStylePosition: "inside" })}>
-              <li>Whiskers (thin lines) extend from minimum to maximum revenue</li>
-              <li>Box (colored rectangle) shows the middle 50% of revenue values (Q1 to Q3)</li>
-              <li>Bold line inside the box marks the median revenue</li>
-            </ul>
+          <div ref={containerRef} className={css({ width: "100%" })}>
+            <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+              Revenue Distribution
+            </h2>
+            <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5" })}>
+              <p className={css({ mb: "md" })}>
+                Each box and whisker shows the distribution of revenue per performance for each year:
+              </p>
+              <div className={css({ display: "flex", flexDirection: "column", gap: "sm", mb: "md" })}>
+                <div className={css({ display: "flex", alignItems: "center", gap: "md" })}>
+                  <svg width="80" height="30">
+                    <line x1="10" x2="70" y1="15" y2="15" stroke={token.var('colors.ink')} strokeWidth="1" />
+                    <line x1="10" x2="10" y1="10" y2="20" stroke={token.var('colors.ink')} strokeWidth="1" />
+                    <line x1="70" x2="70" y1="10" y2="20" stroke={token.var('colors.ink')} strokeWidth="1" />
+                  </svg>
+                  <span>Whiskers extend from minimum to maximum revenue</span>
+                </div>
+                <div className={css({ display: "flex", alignItems: "center", gap: "md" })}>
+                  <svg width="80" height="30">
+                    <rect x="25" y="7" width="30" height="16" fill={token.var('colors.theatreA')} opacity="0.85" />
+                  </svg>
+                  <span>Box shows the middle 50% of revenue values (Q1 to Q3)</span>
+                </div>
+                <div className={css({ display: "flex", alignItems: "center", gap: "md" })}>
+                  <svg width="80" height="30">
+                    <rect x="25" y="7" width="30" height="16" fill={token.var('colors.theatreA')} opacity="0.85" />
+                    <line x1="40" x2="40" y1="7" y2="23" stroke={token.var('colors.ink')} strokeWidth="2" />
+                  </svg>
+                  <span>Bold line marks the median revenue</span>
+                </div>
+              </div>
+            </div>
+            <svg ref={svgRefBoxPlot} />
           </div>
-          <svg ref={svgRefBoxPlot} />
         </PageWidth>
       )}
       {!noneSelected && (
@@ -614,14 +634,24 @@ export const YearByYearVisualization = ({ data }) => {
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Performance Count
           </h2>
-          <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5", maxWidth: "800px" })}>
-            <p className={css({ mb: "sm" })}>
+          <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5" })}>
+            <p className={css({ mb: "md" })}>
               Each bar shows the total number of performances for each year, split by revenue data availability:
             </p>
-            <ul className={css({ mb: "md", ml: 0, pl: 0, listStylePosition: "inside" })}>
-              <li>Darker section: performances with revenue data recorded</li>
-              <li>Lighter section: performances without revenue data</li>
-            </ul>
+            <div className={css({ display: "flex", flexDirection: "column", gap: "sm", mb: "md" })}>
+              <div className={css({ display: "flex", alignItems: "center", gap: "md" })}>
+                <svg width="80" height="30">
+                  <rect x="10" y="7" width="30" height="16" fill={token.var('colors.theatreA')} opacity="0.85" />
+                </svg>
+                <span>Darker section: performances with revenue data recorded</span>
+              </div>
+              <div className={css({ display: "flex", alignItems: "center", gap: "md" })}>
+                <svg width="80" height="30">
+                  <rect x="10" y="7" width="30" height="16" fill={token.var('colors.theatreA')} opacity="0.425" />
+                </svg>
+                <span>Lighter section: performances without revenue data</span>
+              </div>
+            </div>
           </div>
           <svg ref={svgRefCount} />
         </PageWidth>
