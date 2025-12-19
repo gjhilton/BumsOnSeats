@@ -2,47 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { css } from "@generated/css";
 import { html as footerHtml } from "@content/site/footer.md";
 
-export const PageContent = ({html}) => <PageWidth>
-        <div
-          className={css({
-            "& p": {
-              fontSize: "lg",
-              mb: "xl",
-              lineHeight: "1.5",
-              maxWidth: "800px"
-            },
-            "& p:first-child": {
-              fontSize: "xl"
-            }
-          })}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-</PageWidth>
-
-const PageTitle = ({children}) =>
-<h1
-          className={css({
-            fontSize: "2xl",
-            mb: "lg",
-            fontWeight: "normal",
-            lineHeight: "1.1",
-            marginTop: "xl",
-          })}>
-          {children}
-        </h1>
-
-export function PageWidth({ children }) {
+function PageTitle({ children }) {
   return (
-    <div
+    <h1
       className={css({
-        paddingTop: "xl",
-        paddingBottom: "xl",
-        paddingLeft: "2xl",
-        paddingRight: "2xl"
+        fontSize: "2xl",
+        mb: "lg",
+        fontWeight: "normal",
+        lineHeight: "1.1",
+        marginTop: "xl",
       })}
     >
       {children}
-    </div>
+    </h1>
   );
 }
 
@@ -79,12 +51,50 @@ function Footer() {
   );
 }
 
+function PageContent({ html }) {
+  return (
+    <PageWidth>
+      <div
+        className={css({
+          "& p": {
+            fontSize: "lg",
+            mb: "xl",
+            lineHeight: "1.5",
+            maxWidth: "800px"
+          },
+          "& p:first-child": {
+            fontSize: "xl"
+          }
+        })}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </PageWidth>
+  );
+}
+
+export function PageWidth({ children }) {
+  return (
+    <div
+      className={css({
+        paddingTop: "xl",
+        paddingBottom: "xl",
+        paddingLeft: "2xl",
+        paddingRight: "2xl"
+      })}
+    >
+      {children}
+    </div>
+  );
+}
+
+export { PageContent };
+
 export function PageLayout({ title, children }) {
   return (
     <div>
       <PageWidth>
         <Header />
-		<PageTitle>{title}</PageTitle>
+        <PageTitle>{title}</PageTitle>
       </PageWidth>
       {children}
 
