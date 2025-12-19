@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
 import { css } from "@generated/css";
 import { token } from "@generated/tokens";
+import { LatchButton } from "../Button/Button";
 
 const PYRAMID_CONFIG = {
   MARGINS: {
@@ -172,6 +173,9 @@ export const YearByYearVisualization = ({ data }) => {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const [width, setWidth] = useState(1200);
+  const [includeOrdinary, setIncludeOrdinary] = useState(true);
+  const [includeBenefit, setIncludeBenefit] = useState(true);
+  const [includeCommand, setIncludeCommand] = useState(true);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -189,7 +193,13 @@ export const YearByYearVisualization = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const aggregated = aggregatePerformancesByYear(data);
+    const filteredData = data.filter(d => {
+      if (d.isBenefit) return includeBenefit;
+      if (d.isCommand) return includeCommand;
+      return includeOrdinary;
+    });
+
+    const aggregated = aggregatePerformancesByYear(filteredData);
 
     const height = 800;
     const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
@@ -212,16 +222,55 @@ export const YearByYearVisualization = ({ data }) => {
     renderTopAxes(g, xScale, innerHeight, centerX);
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width]);
+  }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
+
+  const noneSelected = !includeOrdinary && !includeCommand && !includeBenefit;
 
   return (
     <div ref={containerRef} className={css({ marginTop: "xl", width: "100%" })}>
       <div className={css({ paddingTop: 0, paddingBottom: 0, paddingLeft: "2xl", paddingRight: "2xl" })}>
-        <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
-          Performance Count
-        </h2>
+        <div className={css({ display: "flex", gap: "md", mb: "lg" })}>
+          <LatchButton
+            checked={includeOrdinary}
+            onChange={() => setIncludeOrdinary(!includeOrdinary)}
+            color={token.var('colors.ink')}
+          >
+            Ordinary Performances
+          </LatchButton>
+          <LatchButton
+            checked={includeCommand}
+            onChange={() => setIncludeCommand(!includeCommand)}
+            color={token.var('colors.ink')}
+          >
+            Command Performances
+          </LatchButton>
+          <LatchButton
+            checked={includeBenefit}
+            onChange={() => setIncludeBenefit(!includeBenefit)}
+            color={token.var('colors.ink')}
+          >
+            Benefit Performances
+          </LatchButton>
+        </div>
+        {noneSelected ? (
+          <div className={css({
+            fontSize: "lg",
+            mb: "lg",
+            color: token.var('colors.ink'),
+            display: "flex",
+            alignItems: "center",
+            gap: "sm"
+          })}>
+            <span>⚠</span>
+            <span>Please select at least one performance type to display the visualization.</span>
+          </div>
+        ) : (
+          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+            Performance Count
+          </h2>
+        )}
       </div>
-      <svg ref={svgRef} />
+      {!noneSelected && <svg ref={svgRef} />}
     </div>
   );
 };
