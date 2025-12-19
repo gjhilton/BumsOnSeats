@@ -29,7 +29,10 @@ export function useMagnifier({
   svgRef,
   renderMagnifiedContent,
   config = {},
-  dependencies = []
+  data,
+  width,
+  height,
+  visibleTheatres
 }) {
   const magnifierRef = useRef(null);
 
@@ -139,7 +142,7 @@ export function useMagnifier({
       svgNode.removeEventListener("touchcancel", handleTouchEnd);
       magnifier.remove();
     };
-  }, [svgRef, renderMagnifiedContent, finalConfig, ...dependencies]);
+  }, [svgRef, renderMagnifiedContent, finalConfig, data, width, height, visibleTheatres]);
 
   return magnifierRef;
 }

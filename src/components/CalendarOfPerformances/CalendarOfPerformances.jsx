@@ -739,12 +739,14 @@ export function CalendarOfPerformances({ data }) {
 
   }, [data, width, height, visibleTheatres, colorScale]);
 
-  // Use magnifier hook
   useMagnifier({
     svgRef,
     renderMagnifiedContent,
     config: magnifierConfig,
-    dependencies: [data, width, height, visibleTheatres]
+    data,
+    width,
+    height,
+    visibleTheatres
   });
 
   return (
