@@ -451,6 +451,8 @@ export const YearByYearVisualization = ({ data }) => {
   const [includeBenefit, setIncludeBenefit] = useState(true);
   const [includeCommand, setIncludeCommand] = useState(true);
 
+  const noneSelected = !includeOrdinary && !includeCommand && !includeBenefit;
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -465,7 +467,7 @@ export const YearByYearVisualization = ({ data }) => {
   }, []);
 
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0 || !svgRefCount.current || noneSelected) return;
 
     const filteredData = data.filter(d => {
       if (d.isBenefit) return includeBenefit;
@@ -496,10 +498,10 @@ export const YearByYearVisualization = ({ data }) => {
     renderTopAxes(g, xScale, innerHeight, centerX);
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
+  }, [data, width, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
 
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0 || !svgRefRevenue.current || noneSelected) return;
 
     const filteredData = data.filter(d => {
       if (d.isBenefit) return includeBenefit;
@@ -534,10 +536,10 @@ export const YearByYearVisualization = ({ data }) => {
     });
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
+  }, [data, width, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
 
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0 || !svgRefBoxPlot.current) return;
 
     const filteredData = data.filter(d => {
       if (d.isBenefit) return includeBenefit;
@@ -571,56 +573,55 @@ export const YearByYearVisualization = ({ data }) => {
     });
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
-
-  const noneSelected = !includeOrdinary && !includeCommand && !includeBenefit;
+  }, [data, width, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
 
   return (
     <div className={css({ width: "100%" })}>
       <PageWidth>
-        <div className={css({ display: "flex", gap: "md", mb: "lg" })}>
-          <LatchButton
-            checked={includeOrdinary}
-            onChange={() => setIncludeOrdinary(!includeOrdinary)}
-            color={token.var('colors.ink')}
-          >
-            Ordinary Performances
-          </LatchButton>
-          <LatchButton
-            checked={includeCommand}
-            onChange={() => setIncludeCommand(!includeCommand)}
-            color={token.var('colors.ink')}
-          >
-            Command Performances
-          </LatchButton>
-          <LatchButton
-            checked={includeBenefit}
-            onChange={() => setIncludeBenefit(!includeBenefit)}
-            color={token.var('colors.ink')}
-          >
-            Benefit Performances
-          </LatchButton>
-        </div>
-        {noneSelected && (
-          <div className={css({
-            fontSize: "lg",
-            mb: "lg",
-            color: token.var('colors.ink'),
-            display: "flex",
-            alignItems: "center",
-            gap: "sm"
-          })}>
-            <span>⚠</span>
-            <span>Please select at least one performance type to display the visualization.</span>
+        <div ref={containerRef} className={css({ width: "100%" })}>
+          <div className={css({ display: "flex", gap: "md", mb: "lg" })}>
+            <LatchButton
+              checked={includeOrdinary}
+              onChange={() => setIncludeOrdinary(!includeOrdinary)}
+              color={token.var('colors.ink')}
+            >
+              Ordinary Performances
+            </LatchButton>
+            <LatchButton
+              checked={includeCommand}
+              onChange={() => setIncludeCommand(!includeCommand)}
+              color={token.var('colors.ink')}
+            >
+              Command Performances
+            </LatchButton>
+            <LatchButton
+              checked={includeBenefit}
+              onChange={() => setIncludeBenefit(!includeBenefit)}
+              color={token.var('colors.ink')}
+            >
+              Benefit Performances
+            </LatchButton>
           </div>
-        )}
+          {noneSelected && (
+            <div className={css({
+              fontSize: "lg",
+              mb: "lg",
+              color: token.var('colors.ink'),
+              display: "flex",
+              alignItems: "center",
+              gap: "sm"
+            })}>
+              <span>⚠</span>
+              <span>Please select at least one performance type to display the visualization.</span>
+            </div>
+          )}
+        </div>
       </PageWidth>
       {!noneSelected && (
         <PageWidth>
-          <div ref={containerRef} className={css({ width: "100%" })}>
-            <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
-              Revenue Distribution
-            </h2>
+          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+            Revenue Distribution
+          </h2>
             <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5" })}>
               <p className={css({ mb: "md" })}>
                 Each box and whisker shows the distribution of revenue per performance for each year:
@@ -650,7 +651,6 @@ export const YearByYearVisualization = ({ data }) => {
               </div>
             </div>
             <svg ref={svgRefBoxPlot} />
-          </div>
         </PageWidth>
       )}
       {!noneSelected && (
