@@ -3,6 +3,7 @@ import * as d3 from "d3";
 import { css } from "@generated/css";
 import { token } from "@generated/tokens";
 import { LatchButton } from "../Button/Button";
+import { PageWidth } from "../PageLayout/PageLayout";
 
 const PYRAMID_CONFIG = {
   MARGINS: {
@@ -75,6 +76,49 @@ const aggregateRevenueByYear = (data) => {
   return aggregated.sort((a, b) => a.year - b.year);
 };
 
+const aggregateBoxPlotByYear = (data) => {
+  const yearGroups = d3.group(data, d => d.year);
+  const aggregated = [];
+
+  yearGroups.forEach((performances, year) => {
+    const theatreGroups = d3.group(performances, p => p.theatre);
+
+    const drury = theatreGroups.get("Drury Lane") || [];
+    const covent = theatreGroups.get("Covent Garden") || [];
+
+    const druryWithRevenue = drury.filter(p => p.currencyValue > 0);
+    const coventWithRevenue = covent.filter(p => p.currencyValue > 0);
+
+    // Convert from pence to pounds and sort
+    const druryValues = druryWithRevenue.map(p => p.currencyValue / 240).sort(d3.ascending);
+    const coventValues = coventWithRevenue.map(p => p.currencyValue / 240).sort(d3.ascending);
+
+    const druryStats = druryValues.length > 0 ? {
+      min: d3.min(druryValues),
+      q1: d3.quantile(druryValues, 0.25),
+      median: d3.quantile(druryValues, 0.5),
+      q3: d3.quantile(druryValues, 0.75),
+      max: d3.max(druryValues)
+    } : null;
+
+    const coventStats = coventValues.length > 0 ? {
+      min: d3.min(coventValues),
+      q1: d3.quantile(coventValues, 0.25),
+      median: d3.quantile(coventValues, 0.5),
+      q3: d3.quantile(coventValues, 0.75),
+      max: d3.max(coventValues)
+    } : null;
+
+    aggregated.push({
+      year: year,
+      drury: druryStats,
+      covent: coventStats
+    });
+  });
+
+  return aggregated.sort((a, b) => a.year - b.year);
+};
+
 const createYScale = (data, innerHeight) => {
   const years = data.map(d => d.year);
 
@@ -89,6 +133,18 @@ const createXScale = (data, innerWidth) => {
 
   return d3.scaleLinear()
     .domain([-maxCount, maxCount])
+    .range([0, innerWidth]);
+};
+
+const createXScaleFromBoxPlot = (data, innerWidth) => {
+  const maxValue = d3.max(data, d => {
+    const druryMax = d.drury ? d.drury.max : 0;
+    const coventMax = d.covent ? d.covent.max : 0;
+    return Math.max(druryMax, coventMax);
+  });
+
+  return d3.scaleLinear()
+    .domain([-maxValue, maxValue])
     .range([0, innerWidth]);
 };
 
@@ -201,10 +257,125 @@ const renderTheatreLabels = (g, centerX, innerWidth) => {
     .text("Covent Garden");
 };
 
+const renderDruryBoxPlots = (g, data, xScale, yScale, centerX) => {
+  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+  const boxWidth = yScale.bandwidth();
+
+  const boxPlots = g.append("g")
+    .attr("class", "drury-boxplots")
+    .selectAll("g")
+    .data(data.filter(d => d.drury))
+    .join("g")
+    .attr("transform", d => `translate(0, ${yScale(d.year)})`);
+
+  // Whisker line (min to max)
+  boxPlots.append("line")
+    .attr("x1", d => xScale(-d.drury.min))
+    .attr("x2", d => xScale(-d.drury.max))
+    .attr("y1", boxWidth / 2)
+    .attr("y2", boxWidth / 2)
+    .attr("stroke", THEATRE_COLORS.DRURY)
+    .attr("stroke-width", 1);
+
+  // Box (Q1 to Q3)
+  boxPlots.append("rect")
+    .attr("x", d => xScale(-d.drury.q3))
+    .attr("y", boxWidth * 0.25)
+    .attr("width", d => Math.max(0, xScale(-d.drury.q1) - xScale(-d.drury.q3)))
+    .attr("height", boxWidth * 0.5)
+    .attr("fill", THEATRE_COLORS.DRURY)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+
+  // Median line
+  boxPlots.append("line")
+    .attr("x1", d => xScale(-d.drury.median))
+    .attr("x2", d => xScale(-d.drury.median))
+    .attr("y1", boxWidth * 0.25)
+    .attr("y2", boxWidth * 0.75)
+    .attr("stroke", token.var('colors.ink'))
+    .attr("stroke-width", 2);
+
+  // Min whisker cap
+  boxPlots.append("line")
+    .attr("x1", d => xScale(-d.drury.min))
+    .attr("x2", d => xScale(-d.drury.min))
+    .attr("y1", boxWidth * 0.35)
+    .attr("y2", boxWidth * 0.65)
+    .attr("stroke", THEATRE_COLORS.DRURY)
+    .attr("stroke-width", 1);
+
+  // Max whisker cap
+  boxPlots.append("line")
+    .attr("x1", d => xScale(-d.drury.max))
+    .attr("x2", d => xScale(-d.drury.max))
+    .attr("y1", boxWidth * 0.35)
+    .attr("y2", boxWidth * 0.65)
+    .attr("stroke", THEATRE_COLORS.DRURY)
+    .attr("stroke-width", 1);
+};
+
+const renderCoventBoxPlots = (g, data, xScale, yScale, centerX) => {
+  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+  const boxWidth = yScale.bandwidth();
+
+  const boxPlots = g.append("g")
+    .attr("class", "covent-boxplots")
+    .selectAll("g")
+    .data(data.filter(d => d.covent))
+    .join("g")
+    .attr("transform", d => `translate(0, ${yScale(d.year)})`);
+
+  // Whisker line (min to max)
+  boxPlots.append("line")
+    .attr("x1", d => xScale(d.covent.min))
+    .attr("x2", d => xScale(d.covent.max))
+    .attr("y1", boxWidth / 2)
+    .attr("y2", boxWidth / 2)
+    .attr("stroke", THEATRE_COLORS.COVENT)
+    .attr("stroke-width", 1);
+
+  // Box (Q1 to Q3)
+  boxPlots.append("rect")
+    .attr("x", d => xScale(d.covent.q1))
+    .attr("y", boxWidth * 0.25)
+    .attr("width", d => Math.max(0, xScale(d.covent.q3) - xScale(d.covent.q1)))
+    .attr("height", boxWidth * 0.5)
+    .attr("fill", THEATRE_COLORS.COVENT)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+
+  // Median line
+  boxPlots.append("line")
+    .attr("x1", d => xScale(d.covent.median))
+    .attr("x2", d => xScale(d.covent.median))
+    .attr("y1", boxWidth * 0.25)
+    .attr("y2", boxWidth * 0.75)
+    .attr("stroke", token.var('colors.ink'))
+    .attr("stroke-width", 2);
+
+  // Min whisker cap
+  boxPlots.append("line")
+    .attr("x1", d => xScale(d.covent.min))
+    .attr("x2", d => xScale(d.covent.min))
+    .attr("y1", boxWidth * 0.35)
+    .attr("y2", boxWidth * 0.65)
+    .attr("stroke", THEATRE_COLORS.COVENT)
+    .attr("stroke-width", 1);
+
+  // Max whisker cap
+  boxPlots.append("line")
+    .attr("x1", d => xScale(d.covent.max))
+    .attr("x2", d => xScale(d.covent.max))
+    .attr("y1", boxWidth * 0.35)
+    .attr("y2", boxWidth * 0.65)
+    .attr("stroke", THEATRE_COLORS.COVENT)
+    .attr("stroke-width", 1);
+};
+
 
 export const YearByYearVisualization = ({ data }) => {
   const svgRefCount = useRef(null);
   const svgRefRevenue = useRef(null);
+  const svgRefBoxPlot = useRef(null);
   const containerRef = useRef(null);
   const [width, setWidth] = useState(1200);
   const [includeOrdinary, setIncludeOrdinary] = useState(true);
@@ -268,6 +439,7 @@ export const YearByYearVisualization = ({ data }) => {
     });
 
     const aggregated = aggregateRevenueByYear(filteredData);
+    const boxPlotData = aggregateBoxPlotByYear(filteredData);
 
     const height = 800;
     const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
@@ -281,7 +453,7 @@ export const YearByYearVisualization = ({ data }) => {
       .attr("transform", `translate(${PYRAMID_CONFIG.MARGINS.left},${PYRAMID_CONFIG.MARGINS.top})`);
 
     const yScale = createYScale(aggregated, innerHeight);
-    const xScale = createXScale(aggregated, innerWidth);
+    const xScale = createXScaleFromBoxPlot(boxPlotData, innerWidth);
     const centerX = xScale(0);
 
     renderDruryBars(g, aggregated, xScale, yScale, centerX);
@@ -295,11 +467,48 @@ export const YearByYearVisualization = ({ data }) => {
 
   }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
 
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    const filteredData = data.filter(d => {
+      if (d.isBenefit) return includeBenefit;
+      if (d.isCommand) return includeCommand;
+      return includeOrdinary;
+    });
+
+    const aggregated = aggregateBoxPlotByYear(filteredData);
+
+    const height = 800;
+    const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
+    const innerHeight = height - PYRAMID_CONFIG.MARGINS.top - PYRAMID_CONFIG.MARGINS.bottom;
+
+    const svg = d3.select(svgRefBoxPlot.current);
+    svg.selectAll("*").remove();
+    svg.attr("width", width).attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${PYRAMID_CONFIG.MARGINS.left},${PYRAMID_CONFIG.MARGINS.top})`);
+
+    const yScale = createYScale(aggregated, innerHeight);
+    const xScale = createXScaleFromBoxPlot(aggregated, innerWidth);
+    const centerX = xScale(0);
+
+    renderDruryBoxPlots(g, aggregated, xScale, yScale, centerX);
+    renderCoventBoxPlots(g, aggregated, xScale, yScale, centerX);
+    renderYearLabels(g, yScale, centerX, aggregated);
+    renderTopAxes(g, xScale, innerHeight, centerX, {
+      tickCount: 10,
+      formatValue: (d) => `£${Math.abs(d).toLocaleString()}`
+    });
+    renderTheatreLabels(g, centerX, innerWidth);
+
+  }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
+
   const noneSelected = !includeOrdinary && !includeCommand && !includeBenefit;
 
   return (
-    <div ref={containerRef} className={css({ marginTop: "xl", width: "100%" })}>
-      <div className={css({ paddingTop: 0, paddingBottom: 0, paddingLeft: "2xl", paddingRight: "2xl" })}>
+    <div ref={containerRef} className={css({ width: "100%" })}>
+      <PageWidth>
         <div className={css({ display: "flex", gap: "md", mb: "lg" })}>
           <LatchButton
             checked={includeOrdinary}
@@ -323,7 +532,7 @@ export const YearByYearVisualization = ({ data }) => {
             Benefit Performances
           </LatchButton>
         </div>
-        {noneSelected ? (
+        {noneSelected && (
           <div className={css({
             fontSize: "lg",
             mb: "lg",
@@ -335,23 +544,32 @@ export const YearByYearVisualization = ({ data }) => {
             <span>⚠</span>
             <span>Please select at least one performance type to display the visualization.</span>
           </div>
-        ) : (
-          <>
-            <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
-              Performance Count
-            </h2>
-          </>
         )}
-      </div>
-      {!noneSelected && <svg ref={svgRefCount} />}
+      </PageWidth>
       {!noneSelected && (
-        <div className={css({ paddingTop: 0, paddingBottom: 0, paddingLeft: "2xl", paddingRight: "2xl" })}>
+        <PageWidth>
+          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+            Revenue Distribution
+          </h2>
+          <svg ref={svgRefBoxPlot} />
+        </PageWidth>
+      )}
+      {!noneSelected && (
+        <PageWidth>
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Mean Revenue
           </h2>
-        </div>
+          <svg ref={svgRefRevenue} />
+        </PageWidth>
       )}
-      {!noneSelected && <svg ref={svgRefRevenue} />}
+      {!noneSelected && (
+        <PageWidth>
+          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+            Performance Count
+          </h2>
+          <svg ref={svgRefCount} />
+        </PageWidth>
+      )}
     </div>
   );
 };
