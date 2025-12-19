@@ -35,10 +35,19 @@ const aggregatePerformancesByYear = (data) => {
     const drury = theatreGroups.get("Drury Lane") || [];
     const covent = theatreGroups.get("Covent Garden") || [];
 
+    const druryWithRevenue = drury.filter(p => p.currencyValue > 0).length;
+    const druryWithoutRevenue = drury.filter(p => p.currencyValue === 0).length;
+    const coventWithRevenue = covent.filter(p => p.currencyValue > 0).length;
+    const coventWithoutRevenue = covent.filter(p => p.currencyValue === 0).length;
+
     aggregated.push({
       year: year,
       druryCount: drury.length,
-      coventCount: covent.length
+      coventCount: covent.length,
+      druryWithRevenue,
+      druryWithoutRevenue,
+      coventWithRevenue,
+      coventWithoutRevenue
     });
   });
 
@@ -206,33 +215,61 @@ const renderTopAxes = (g, xScale, innerHeight, centerX, options = {}) => {
 const renderDruryBars = (g, data, xScale, yScale, centerX) => {
   const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
 
+  // Bar for performances with revenue (solid)
   g.append("g")
-    .attr("class", "drury-bars")
+    .attr("class", "drury-bars-with-revenue")
+    .selectAll("rect")
+    .data(data)
+    .join("rect")
+    .attr("x", d => xScale(-d.druryWithRevenue))
+    .attr("y", d => yScale(d.year))
+    .attr("width", d => Math.max(0, centerX - xScale(-d.druryWithRevenue) - gutterHalf))
+    .attr("height", yScale.bandwidth())
+    .attr("fill", THEATRE_COLORS.DRURY)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+
+  // Bar for performances without revenue (50% opacity, stacked)
+  g.append("g")
+    .attr("class", "drury-bars-without-revenue")
     .selectAll("rect")
     .data(data)
     .join("rect")
     .attr("x", d => xScale(-d.druryCount))
     .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, centerX - xScale(-d.druryCount) - gutterHalf))
+    .attr("width", d => Math.max(0, xScale(-d.druryWithRevenue) - xScale(-d.druryCount)))
     .attr("height", yScale.bandwidth())
     .attr("fill", THEATRE_COLORS.DRURY)
-    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY * 0.5);
 };
 
 const renderCoventBars = (g, data, xScale, yScale, centerX) => {
   const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
 
+  // Bar for performances with revenue (solid)
   g.append("g")
-    .attr("class", "covent-bars")
+    .attr("class", "covent-bars-with-revenue")
     .selectAll("rect")
     .data(data)
     .join("rect")
     .attr("x", centerX + gutterHalf)
     .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, xScale(d.coventCount) - centerX - gutterHalf))
+    .attr("width", d => Math.max(0, xScale(d.coventWithRevenue) - centerX - gutterHalf))
     .attr("height", yScale.bandwidth())
     .attr("fill", THEATRE_COLORS.COVENT)
     .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+
+  // Bar for performances without revenue (50% opacity, stacked)
+  g.append("g")
+    .attr("class", "covent-bars-without-revenue")
+    .selectAll("rect")
+    .data(data)
+    .join("rect")
+    .attr("x", d => xScale(d.coventWithRevenue))
+    .attr("y", d => yScale(d.year))
+    .attr("width", d => Math.max(0, xScale(d.coventCount) - xScale(d.coventWithRevenue)))
+    .attr("height", yScale.bandwidth())
+    .attr("fill", THEATRE_COLORS.COVENT)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY * 0.5);
 };
 
 const renderTheatreLabels = (g, centerX, innerWidth) => {
@@ -551,6 +588,16 @@ export const YearByYearVisualization = ({ data }) => {
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Revenue Distribution
           </h2>
+          <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5", maxWidth: "800px" })}>
+            <p className={css({ mb: "sm" })}>
+              Each box and whisker shows the distribution of revenue per performance for each year:
+            </p>
+            <ul className={css({ mb: "md", ml: 0, pl: 0, listStylePosition: "inside" })}>
+              <li>Whiskers (thin lines) extend from minimum to maximum revenue</li>
+              <li>Box (colored rectangle) shows the middle 50% of revenue values (Q1 to Q3)</li>
+              <li>Bold line inside the box marks the median revenue</li>
+            </ul>
+          </div>
           <svg ref={svgRefBoxPlot} />
         </PageWidth>
       )}
@@ -567,6 +614,15 @@ export const YearByYearVisualization = ({ data }) => {
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Performance Count
           </h2>
+          <div className={css({ fontSize: "md", mb: "lg", lineHeight: "1.5", maxWidth: "800px" })}>
+            <p className={css({ mb: "sm" })}>
+              Each bar shows the total number of performances for each year, split by revenue data availability:
+            </p>
+            <ul className={css({ mb: "md", ml: 0, pl: 0, listStylePosition: "inside" })}>
+              <li>Darker section: performances with revenue data recorded</li>
+              <li>Lighter section: performances without revenue data</li>
+            </ul>
+          </div>
           <svg ref={svgRefCount} />
         </PageWidth>
       )}
