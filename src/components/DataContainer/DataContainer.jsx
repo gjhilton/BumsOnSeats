@@ -3,7 +3,7 @@ import { css } from "@generated/css";
 
 const LoadingComponent = () => (
   <div className={css({ padding: "2rem", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xlarge", mb: "lg" })}>
+    <h1 className={css({ fontSize: "xl", mb: "lg" })}>
       Loading...
     </h1>
   </div>
@@ -11,7 +11,7 @@ const LoadingComponent = () => (
 
 const ErrorComponent = ({ message }) => (
   <div className={css({ padding: "2rem", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xlarge", mb: "lg", color: "accent" })}>
+    <h1 className={css({ fontSize: "xl", mb: "lg", color: "accent" })}>
       Error loading data
     </h1>
     <p>{message}</p>
@@ -20,7 +20,7 @@ const ErrorComponent = ({ message }) => (
 
 const NoDataComponent = () => (
   <div className={css({ padding: "2rem", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xlarge", mb: "lg" })}>
+    <h1 className={css({ fontSize: "xl", mb: "lg" })}>
       No data available
     </h1>
   </div>

@@ -7,23 +7,23 @@ export const PageContent = ({html}) => <PageWidth>
         <div
           className={css({
             "& p": {
-              fontSize: "1.5rem",
+              fontSize: "lg",
               mb: "xl",
               lineHeight: "1.5",
               maxWidth: "800px"
             },
             "& p:first-child": {
-              fontSize: "2rem"
+              fontSize: "xl"
             }
           })}
           dangerouslySetInnerHTML={{ __html: html }}
         />
 </PageWidth>
 
-const PageTitle = ({children}) =>  
+const PageTitle = ({children}) =>
 <h1
           className={css({
-            fontSize: "5rem",
+            fontSize: "2xl",
             mb: "lg",
             fontWeight: "normal",
             lineHeight: "1.1",
@@ -51,7 +51,7 @@ function Header() {
         to="/"
         className={css({
           textDecoration: "none !important",
-          fontSize: "2rem",
+          fontSize: "xl",
           _hover: {
             textDecoration: "underline !important"
           }
@@ -67,7 +67,7 @@ function Footer() {
   return (
     <footer
       className={css({
-        fontSize: "1rem",
+        fontSize: "md",
         lineHeight: "1.6",
         borderTop: `1px solid ${token.var('colors.ink')}`,
         paddingTop: "2rem",

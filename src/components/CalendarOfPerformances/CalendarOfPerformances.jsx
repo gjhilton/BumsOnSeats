@@ -878,7 +878,7 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
                   />
                 ))}
               </svg>
-              <span className={css({ fontSize: "1rem" })}>{label}</span>
+              <span className={css({ fontSize: "md" })}>{label}</span>
             </div>
           );
         })}
@@ -902,7 +902,7 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
               />
             ))}
           </svg>
-          <span className={css({ fontSize: "1rem" })}>No data</span>
+          <span className={css({ fontSize: "md" })}>No data</span>
         </div>
       </div>
     </div>
