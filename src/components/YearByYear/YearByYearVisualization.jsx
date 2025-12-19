@@ -272,6 +272,38 @@ const renderCoventBars = (g, data, xScale, yScale, centerX) => {
     .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY * 0.5);
 };
 
+const renderDrurySimpleBars = (g, data, xScale, yScale, centerX) => {
+  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+
+  g.append("g")
+    .attr("class", "drury-bars")
+    .selectAll("rect")
+    .data(data)
+    .join("rect")
+    .attr("x", d => xScale(-d.druryCount))
+    .attr("y", d => yScale(d.year))
+    .attr("width", d => Math.max(0, centerX - xScale(-d.druryCount) - gutterHalf))
+    .attr("height", yScale.bandwidth())
+    .attr("fill", THEATRE_COLORS.DRURY)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+};
+
+const renderCoventSimpleBars = (g, data, xScale, yScale, centerX) => {
+  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+
+  g.append("g")
+    .attr("class", "covent-bars")
+    .selectAll("rect")
+    .data(data)
+    .join("rect")
+    .attr("x", centerX + gutterHalf)
+    .attr("y", d => yScale(d.year))
+    .attr("width", d => Math.max(0, xScale(d.coventCount) - centerX - gutterHalf))
+    .attr("height", yScale.bandwidth())
+    .attr("fill", THEATRE_COLORS.COVENT)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+};
+
 const renderTheatreLabels = (g, centerX, innerWidth) => {
   const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
 
@@ -493,8 +525,8 @@ export const YearByYearVisualization = ({ data }) => {
     const xScale = createXScaleFromBoxPlot(boxPlotData, innerWidth);
     const centerX = xScale(0);
 
-    renderDruryBars(g, aggregated, xScale, yScale, centerX);
-    renderCoventBars(g, aggregated, xScale, yScale, centerX);
+    renderDrurySimpleBars(g, aggregated, xScale, yScale, centerX);
+    renderCoventSimpleBars(g, aggregated, xScale, yScale, centerX);
     renderYearLabels(g, yScale, centerX, aggregated);
     renderTopAxes(g, xScale, innerHeight, centerX, {
       tickCount: 10,
