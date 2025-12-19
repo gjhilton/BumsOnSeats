@@ -16,7 +16,7 @@ export const PageContent = ({html}) => <PageWidth>
               fontSize: "2rem"
             }
           })}
-          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          dangerouslySetInnerHTML={{ __html: html }}
         />
 </PageWidth>
 
