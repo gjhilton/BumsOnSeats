@@ -44,6 +44,37 @@ const aggregatePerformancesByYear = (data) => {
   return aggregated.sort((a, b) => a.year - b.year);
 };
 
+const aggregateRevenueByYear = (data) => {
+  const yearGroups = d3.group(data, d => d.year);
+  const aggregated = [];
+
+  yearGroups.forEach((performances, year) => {
+    const theatreGroups = d3.group(performances, p => p.theatre);
+
+    const drury = theatreGroups.get("Drury Lane") || [];
+    const covent = theatreGroups.get("Covent Garden") || [];
+
+    const druryWithRevenue = drury.filter(p => p.currencyValue > 0);
+    const coventWithRevenue = covent.filter(p => p.currencyValue > 0);
+
+    // Convert from pence to pounds (240 pence = £1)
+    const druryMean = druryWithRevenue.length > 0
+      ? d3.mean(druryWithRevenue, p => p.currencyValue / 240)
+      : 0;
+    const coventMean = coventWithRevenue.length > 0
+      ? d3.mean(coventWithRevenue, p => p.currencyValue / 240)
+      : 0;
+
+    aggregated.push({
+      year: year,
+      druryCount: druryMean,
+      coventCount: coventMean
+    });
+  });
+
+  return aggregated.sort((a, b) => a.year - b.year);
+};
+
 const createYScale = (data, innerHeight) => {
   const years = data.map(d => d.year);
 
@@ -76,14 +107,16 @@ const renderYearLabels = (g, yScale, centerX, data) => {
     .text(d => d.year);
 };
 
-const renderTopAxes = (g, xScale, innerHeight, centerX) => {
+const renderTopAxes = (g, xScale, innerHeight, centerX, options = {}) => {
+  const { tickCount = 5, formatValue = (d) => Math.abs(d) } = options;
+
   const leftAxis = d3.axisTop(xScale)
-    .tickValues(xScale.ticks(5).filter(d => d <= 0))
-    .tickFormat(d => Math.abs(d));
+    .tickValues(xScale.ticks(tickCount).filter(d => d < 0))
+    .tickFormat(formatValue);
 
   const rightAxis = d3.axisTop(xScale)
-    .tickValues(xScale.ticks(5).filter(d => d >= 0))
-    .tickFormat(d => Math.abs(d));
+    .tickValues(xScale.ticks(tickCount).filter(d => d > 0))
+    .tickFormat(formatValue);
 
   g.append("g")
     .attr("class", "x-axis-left")
@@ -170,7 +203,8 @@ const renderTheatreLabels = (g, centerX, innerWidth) => {
 
 
 export const YearByYearVisualization = ({ data }) => {
-  const svgRef = useRef(null);
+  const svgRefCount = useRef(null);
+  const svgRefRevenue = useRef(null);
   const containerRef = useRef(null);
   const [width, setWidth] = useState(1200);
   const [includeOrdinary, setIncludeOrdinary] = useState(true);
@@ -205,7 +239,7 @@ export const YearByYearVisualization = ({ data }) => {
     const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
     const innerHeight = height - PYRAMID_CONFIG.MARGINS.top - PYRAMID_CONFIG.MARGINS.bottom;
 
-    const svg = d3.select(svgRef.current);
+    const svg = d3.select(svgRefCount.current);
     svg.selectAll("*").remove();
     svg.attr("width", width).attr("height", height);
 
@@ -220,6 +254,43 @@ export const YearByYearVisualization = ({ data }) => {
     renderCoventBars(g, aggregated, xScale, yScale, centerX);
     renderYearLabels(g, yScale, centerX, aggregated);
     renderTopAxes(g, xScale, innerHeight, centerX);
+    renderTheatreLabels(g, centerX, innerWidth);
+
+  }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    const filteredData = data.filter(d => {
+      if (d.isBenefit) return includeBenefit;
+      if (d.isCommand) return includeCommand;
+      return includeOrdinary;
+    });
+
+    const aggregated = aggregateRevenueByYear(filteredData);
+
+    const height = 800;
+    const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
+    const innerHeight = height - PYRAMID_CONFIG.MARGINS.top - PYRAMID_CONFIG.MARGINS.bottom;
+
+    const svg = d3.select(svgRefRevenue.current);
+    svg.selectAll("*").remove();
+    svg.attr("width", width).attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${PYRAMID_CONFIG.MARGINS.left},${PYRAMID_CONFIG.MARGINS.top})`);
+
+    const yScale = createYScale(aggregated, innerHeight);
+    const xScale = createXScale(aggregated, innerWidth);
+    const centerX = xScale(0);
+
+    renderDruryBars(g, aggregated, xScale, yScale, centerX);
+    renderCoventBars(g, aggregated, xScale, yScale, centerX);
+    renderYearLabels(g, yScale, centerX, aggregated);
+    renderTopAxes(g, xScale, innerHeight, centerX, {
+      tickCount: 10,
+      formatValue: (d) => `£${Math.abs(d).toLocaleString()}`
+    });
     renderTheatreLabels(g, centerX, innerWidth);
 
   }, [data, width, includeOrdinary, includeBenefit, includeCommand]);
@@ -265,12 +336,22 @@ export const YearByYearVisualization = ({ data }) => {
             <span>Please select at least one performance type to display the visualization.</span>
           </div>
         ) : (
-          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
-            Performance Count
-          </h2>
+          <>
+            <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+              Performance Count
+            </h2>
+          </>
         )}
       </div>
-      {!noneSelected && <svg ref={svgRef} />}
+      {!noneSelected && <svg ref={svgRefCount} />}
+      {!noneSelected && (
+        <div className={css({ paddingTop: 0, paddingBottom: 0, paddingLeft: "2xl", paddingRight: "2xl" })}>
+          <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
+            Mean Revenue
+          </h2>
+        </div>
+      )}
+      {!noneSelected && <svg ref={svgRefRevenue} />}
     </div>
   );
 };
