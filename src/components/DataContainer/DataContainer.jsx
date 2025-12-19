@@ -1,30 +1,24 @@
 import { useState, useEffect } from "react";
 import { css } from "@generated/css";
 
-const LoadingComponent = () => (
+const MessagePage = ({ title, titleColor, children }) => (
   <div className={css({ padding: "xl", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xl", mb: "lg" })}>
-      Loading...
+    <h1 className={css({ fontSize: "xl", mb: "lg", color: titleColor })}>
+      {title}
     </h1>
+    {children}
   </div>
 );
+
+const LoadingComponent = () => <MessagePage title="Loading..." />;
 
 const ErrorComponent = ({ message }) => (
-  <div className={css({ padding: "xl", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xl", mb: "lg", color: "accent" })}>
-      Error loading data
-    </h1>
+  <MessagePage title="Error loading data" titleColor="accent">
     <p>{message}</p>
-  </div>
+  </MessagePage>
 );
 
-const NoDataComponent = () => (
-  <div className={css({ padding: "xl", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xl", mb: "lg" })}>
-      No data available
-    </h1>
-  </div>
-);
+const NoDataComponent = () => <MessagePage title="No data available" />;
 
 export function DataContainer({ loadData, children }) {
   const [data, setData] = useState(null);

@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { css } from "@generated/css";
-import { token } from "@generated/tokens";
 import { html as footerHtml } from "@content/site/footer.md";
 
 export const PageContent = ({html}) => <PageWidth>
@@ -72,7 +71,7 @@ function Footer() {
       className={css({
         fontSize: "md",
         lineHeight: "1.6",
-        borderTop: `1px solid ${token.var('colors.ink')}`,
+        borderTop: "1px solid ink",
         paddingTop: "xl",
       })}
       dangerouslySetInnerHTML={{ __html: footerHtml }}
