@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { css } from "@generated/css";
 import { html as footerHtml } from "@content/site/footer.md";
 
-function PageTitle({ children }) {
+const PageTitle = ({ children }) => {
   return (
     <h1
       className={css({
@@ -16,9 +16,9 @@ function PageTitle({ children }) {
       {children}
     </h1>
   );
-}
+};
 
-function Header() {
+const Header = () => {
   return (
     <header>
       <Link
@@ -35,23 +35,25 @@ function Header() {
       </Link>
     </header>
   );
-}
+};
 
-function Footer() {
+const Footer = () => {
   return (
     <footer
       className={css({
         fontSize: "md",
         lineHeight: "1.6",
-        borderTop: "1px solid ink",
+        borderTopWidth: "1px",
+        borderTopStyle: "solid",
+        borderTopColor: "ink",
         paddingTop: "xl",
       })}
       dangerouslySetInnerHTML={{ __html: footerHtml }}
     />
   );
-}
+};
 
-function PageContent({ html }) {
+const PageContent = ({ html }) => {
   return (
     <PageWidth>
       <div
@@ -70,9 +72,9 @@ function PageContent({ html }) {
       />
     </PageWidth>
   );
-}
+};
 
-export function PageWidth({ children }) {
+export const PageWidth = ({ children }) => {
   return (
     <div
       className={css({
@@ -85,11 +87,11 @@ export function PageWidth({ children }) {
       {children}
     </div>
   );
-}
+};
 
 export { PageContent };
 
-export function PageLayout({ title, children }) {
+export const PageLayout = ({ title, children }) => {
   return (
     <div>
       <PageWidth>
@@ -103,4 +105,4 @@ export function PageLayout({ title, children }) {
       </PageWidth>
     </div>
   );
-}
+};
