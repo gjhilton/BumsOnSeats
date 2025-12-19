@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { css } from "@generated/css";
 
 const LoadingComponent = () => (
-  <div className={css({ padding: "2rem", minHeight: "100vh" })}>
+  <div className={css({ padding: "xl", minHeight: "100vh" })}>
     <h1 className={css({ fontSize: "xl", mb: "lg" })}>
       Loading...
     </h1>
@@ -10,7 +10,7 @@ const LoadingComponent = () => (
 );
 
 const ErrorComponent = ({ message }) => (
-  <div className={css({ padding: "2rem", minHeight: "100vh" })}>
+  <div className={css({ padding: "xl", minHeight: "100vh" })}>
     <h1 className={css({ fontSize: "xl", mb: "lg", color: "accent" })}>
       Error loading data
     </h1>
@@ -19,7 +19,7 @@ const ErrorComponent = ({ message }) => (
 );
 
 const NoDataComponent = () => (
-  <div className={css({ padding: "2rem", minHeight: "100vh" })}>
+  <div className={css({ padding: "xl", minHeight: "100vh" })}>
     <h1 className={css({ fontSize: "xl", mb: "lg" })}>
       No data available
     </h1>

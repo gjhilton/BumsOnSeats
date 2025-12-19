@@ -781,7 +781,7 @@ function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
       <div
         className={css({
           display: "flex",
-          gap: "1rem",
+          gap: "md",
           marginLeft: `${CHART_MARGINS.left}px`,
           alignItems: "center",
         })}
@@ -800,7 +800,7 @@ function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
 
       <div className={css({
         display: "flex",
-        gap: "1rem",
+        gap: "md",
         marginRight: `${CHART_MARGINS.right}px`
       })}>
         <Button onClick={() => exportSVG(svgRef)}>
@@ -848,8 +848,8 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
       <div
         className={css({
           display: "flex",
-          gap: "1rem",
-          marginTop: "1rem"
+          gap: "md",
+          marginTop: "md"
         })}
       >
         {legendValues.map(({ label, value }) => {
@@ -863,7 +863,7 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "0.5rem"
+                gap: "sm"
               })}
             >
               <svg width={svgWidth} height={svgHeight}>
@@ -887,7 +887,7 @@ function Legend({ legendHeightScale, visibleTheatres, width, data }) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "0.5rem"
+            gap: "sm"
           })}
         >
           <svg width={dayWidth * activeTheatres.length} height={svgHeight}>

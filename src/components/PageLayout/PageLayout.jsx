@@ -27,7 +27,7 @@ const PageTitle = ({children}) =>
             mb: "lg",
             fontWeight: "normal",
             lineHeight: "1.1",
-            marginTop: "2rem",
+            marginTop: "xl",
           })}>
           {children}
         </h1>
@@ -36,7 +36,10 @@ export function PageWidth({ children }) {
   return (
     <div
       className={css({
-        padding: "2rem 8rem"
+        paddingTop: "xl",
+        paddingBottom: "xl",
+        paddingLeft: "2xl",
+        paddingRight: "2xl"
       })}
     >
       {children}
@@ -70,7 +73,7 @@ function Footer() {
         fontSize: "md",
         lineHeight: "1.6",
         borderTop: `1px solid ${token.var('colors.ink')}`,
-        paddingTop: "2rem",
+        paddingTop: "xl",
       })}
       dangerouslySetInnerHTML={{ __html: footerHtml }}
     />

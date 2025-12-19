@@ -1,7 +1,10 @@
 import { css } from "@generated/css";
 
 const BUTTON_BASE_STYLES = {
-  padding: "0.5rem 1rem",
+  paddingTop: "0.5rem",
+  paddingBottom: "0.5rem",
+  paddingLeft: "md",
+  paddingRight: "md",
   fontSize: "md",
   lineHeight: "1.5",
   background: "transparent",
@@ -31,7 +34,7 @@ export const LatchButton = ({ checked, onChange, children, color }) => (
       ...BUTTON_BASE_STYLES,
       display: "flex",
       alignItems: "center",
-      gap: "0.5rem",
+      gap: "sm",
       fontWeight: 700,
       borderColor: checked ? 'var(--button-color)' : "currentColor",
       color: checked ? 'var(--button-color)' : "inherit",

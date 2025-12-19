@@ -29,6 +29,7 @@ export default defineConfig({
                     theatresBoth: { value: '#7E3BA6' },
                 },
                 spacing: {
+                    sm: { value: '0.5rem' },
                     md: { value: '1rem' },
                     lg: { value: '1.5rem' },
                     xl: { value: '2rem' },
