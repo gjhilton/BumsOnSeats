@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 const Paper = ({ children }) => (
   <div
     className={css({
+      color: "#000",
       containerType: "inline-size",
       width: "80%",
       maxWidth: "800px",
@@ -372,8 +373,11 @@ export function Playbill(
         <Act number="1" link="/performances" title="Performance Calendar">
           To this calendar is joined an account of the monies received at each performance, faithfully recorded, whereby the prosperity or decline of particular entertainments may be plainly discerned.
         </Act>
-         <Act number="2"  title="(In a state of improvement)">
-          As yet incomplete, the developers being daily employed upon it
+        <Act number={2} title="Year by Year Analysis" link="/year-by-year">
+          <p>
+            Explore performance trends on a <b>year-by-year</b> basis,
+            aggregating data across both Drury Lane and Covent Garden theatres.
+          </p>
         </Act>
         <Footer />
       </div>

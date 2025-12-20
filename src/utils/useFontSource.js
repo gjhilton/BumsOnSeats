@@ -47,15 +47,3 @@ export function useFontSource() {
 
   return fontSource;
 }
-
-/**
- * Check if Typekit fonts are loaded
- *
- * @returns {boolean} True if Typekit fonts are being used
- *
- * @example
- * const isTypekitLoaded = useFontSource() === 'typekit';
- */
-export function useIsTypekitLoaded() {
-  return useFontSource() === "typekit";
-}
