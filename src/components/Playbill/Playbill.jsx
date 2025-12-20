@@ -379,6 +379,12 @@ export function Playbill(
             aggregating data across both Drury Lane and Covent Garden theatres.
           </p>
         </Act>
+        <Act number={3} title="Capacity vs Revenue" link="/capacity-revenue">
+          <p>
+            Examine the relationship between theatre <b>capacity</b> and <b>revenue</b>,
+            revealing patterns in audience attendance and financial success.
+          </p>
+        </Act>
         <Footer />
       </div>
     </Paper>
