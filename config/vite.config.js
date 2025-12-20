@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
+import { plugin as markdown } from 'vite-plugin-markdown'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -16,6 +17,7 @@ export default defineConfig({
             generatedRouteTree: path.resolve(__dirname, '../src/routeTree.gen.ts'),
         }),
         react(),
+        markdown({ mode: 'html' }),
     ],
     resolve: {
         alias: {
@@ -24,6 +26,7 @@ export default defineConfig({
             '@lib': path.resolve(__dirname, '../src/lib'),
             '@routes': path.resolve(__dirname, '../src/routes'),
             '@style': path.resolve(__dirname, '../src/style'),
+            '@content': path.resolve(__dirname, '../src/content'),
             '@generated': path.resolve(__dirname, '../styled-system'),
         },
     },
