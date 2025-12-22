@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { css } from "@generated/css";
+import { LoadingSpinner } from "@components/LoadingSpinner/LoadingSpinner";
+import { PageWidth } from "@components/PageLayout/PageLayout";
 
 const MessagePage = ({ title, titleColor, children }) => (
-  <div className={css({ padding: "xl", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xl", mb: "lg", color: titleColor })}>
-      {title}
-    </h1>
-    {children}
-  </div>
+  <PageWidth>
+    <div className={css({ padding: "xl", minHeight: "100vh" })}>
+      <h1 className={css({ fontSize: "xl", mb: "lg", color: titleColor })}>
+        {title}
+      </h1>
+      {children}
+    </div>
+  </PageWidth>
 );
 
-const LoadingComponent = () => <MessagePage title="Loading..." />;
+const LoadingComponent = () => <LoadingSpinner />;
 
 const ErrorComponent = ({ message }) => (
   <MessagePage title="Error loading data" titleColor="accent">
