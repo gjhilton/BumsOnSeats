@@ -4,6 +4,8 @@ import { css } from "@generated/css";
 import { token } from "@generated/tokens";
 import { useMagnifier } from "../../hooks/useMagnifier";
 import { Button, LatchButton } from "../Button/Button";
+import { useChartRender } from "../../hooks/useChartRender";
+import { useResizeObserver } from "../../hooks/useResizeObserver";
 
 const THEATRES = {
   DRURY_LANE: "Drury Lane",
@@ -371,7 +373,7 @@ export function CalendarOfPerformances({ data }) {
     innerHeight: 0
   });
 
-  const [width, setWidth] = useState(LAYOUT_CONFIG.DEFAULT_WIDTH);
+  const width = useResizeObserver(containerRef, LAYOUT_CONFIG.DEFAULT_WIDTH);
   const [visibleTheatres, setVisibleTheatres] = useState({
     [THEATRES.DRURY_LANE]: true,
     [THEATRES.COVENT_GARDEN]: true
@@ -493,32 +495,129 @@ export function CalendarOfPerformances({ data }) {
 
   }, []);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const annualAverages = useMemo(() => {
+    if (!data || data.length === 0 || STUB_MARK_STRATEGY !== 'AVERAGE') return null;
+    return calculateAnnualAverages(data);
+  }, [data]);
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        setWidth(entry.contentRect.width);
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!data || data.length === 0) return;
+  const processedData = useMemo(() => {
+    if (!data || data.length === 0) return null;
 
     const filteredData = data.filter(d => visibleTheatres[d.theatre]);
+    const performanceData = preparePerformanceData(filteredData);
+    const dayGroups = d3.group(performanceData, d => `${d.year}-${d.dayOfYear}`);
 
     const minDataYear = d3.min(data, d => d.year);
     const yearStart = Math.floor(minDataYear / 10) * 10 - 1;
     const yearEnd = d3.max(data, d => d.year);
+    const maxCurrencyValue = d3.max(data, d => d.currencyValue);
 
-    // Calculate annual averages if using AVERAGE strategy
-    const annualAverages = STUB_MARK_STRATEGY === 'AVERAGE'
-      ? calculateAnnualAverages(data)
-      : null;
+    const innerHeight = height - CHART_MARGINS.top - CHART_MARGINS.bottom;
+    const yScale = createYScale(innerHeight, yearStart, yearEnd);
+    const heightScale = createHeightScale(maxCurrencyValue, yScale.bandwidth());
+
+    const barsToRender = [];
+    const markersToRender = [];
+
+    dayGroups.forEach((performances) => {
+      if (performances.length === 1) {
+        const perf = performances[0];
+        if (perf.currencyValue > 0) {
+          barsToRender.push({
+            ...perf,
+            fill: colorScale(perf.theatre),
+            barHeight: calculateBarHeight(perf.currencyValue, heightScale)
+          });
+        } else {
+          const stubProps = calculateStubHeight(perf, annualAverages, heightScale);
+
+          markersToRender.push({
+            ...perf,
+            fill: colorScale(perf.theatre),
+            xOffset: 0,
+            stubHeight: stubProps.height,
+            stubOpacity: stubProps.opacity
+          });
+        }
+      } else if (performances.length === 2) {
+        const [perf1, perf2] = performances;
+        const bothHaveData = perf1.currencyValue > 0 && perf2.currencyValue > 0;
+        const neitherHaveData = perf1.currencyValue === 0 && perf2.currencyValue === 0;
+
+        if (bothHaveData) {
+          const larger = perf1.currencyValue >= perf2.currencyValue ? perf1 : perf2;
+          const smaller = perf1.currencyValue >= perf2.currencyValue ? perf2 : perf1;
+
+          barsToRender.push({
+            ...larger,
+            fill: colorScale(larger.theatre),
+            barHeight: calculateBarHeight(larger.currencyValue, heightScale)
+          });
+
+          barsToRender.push({
+            ...smaller,
+            fill: OVERLAY_GREY,
+            barHeight: calculateBarHeight(smaller.currencyValue, heightScale)
+          });
+        } else if (neitherHaveData) {
+          const stubProps1 = calculateStubHeight(perf1, annualAverages, heightScale);
+          const stubProps2 = calculateStubHeight(perf2, annualAverages, heightScale);
+
+          markersToRender.push({
+            ...perf1,
+            fill: colorScale(perf1.theatre),
+            xOffset: 0,
+            stubHeight: stubProps1.height,
+            stubOpacity: stubProps1.opacity
+          });
+          markersToRender.push({
+            ...perf2,
+            fill: colorScale(perf2.theatre),
+            xOffset: 0,
+            stubHeight: stubProps2.height,
+            stubOpacity: stubProps2.opacity
+          });
+        } else {
+          const withData = perf1.currencyValue > 0 ? perf1 : perf2;
+          const withoutData = perf1.currencyValue > 0 ? perf2 : perf1;
+
+          barsToRender.push({
+            ...withData,
+            fill: colorScale(withData.theatre),
+            barHeight: calculateBarHeight(withData.currencyValue, heightScale)
+          });
+
+          const stubProps = calculateStubHeight(withoutData, annualAverages, heightScale);
+
+          markersToRender.push({
+            ...withoutData,
+            fill: colorScale(withoutData.theatre),
+            xOffset: 0,
+            stubHeight: stubProps.height,
+            stubOpacity: stubProps.opacity
+          });
+        }
+      }
+    });
+
+    return {
+      dayGroups,
+      yearStart,
+      yearEnd,
+      minDataYear,
+      maxCurrencyValue,
+      performanceData,
+      yScale,
+      heightScale,
+      barsToRender,
+      markersToRender
+    };
+  }, [data, visibleTheatres, height, colorScale, annualAverages]);
+
+  const renderChart = useCallback(() => {
+    if (!processedData) return;
+
+    const { yearStart, yearEnd, minDataYear, yScale, barsToRender, markersToRender } = processedData;
 
     d3.select(svgRef.current).selectAll("*").remove();
 
@@ -526,8 +625,6 @@ export function CalendarOfPerformances({ data }) {
     const innerHeight = height - CHART_MARGINS.top - CHART_MARGINS.bottom;
 
     const xScaleForLabels = createXScale(innerWidth, DAYS_IN_REGULAR_YEAR);
-    const yScale = createYScale(innerHeight, yearStart, yearEnd);
-    const heightScale = createHeightScale(d3.max(data, d => d.currencyValue), yScale.bandwidth());
 
     const svg = d3
       .select(svgRef.current)
@@ -570,11 +667,6 @@ export function CalendarOfPerformances({ data }) {
       .attr("stroke", token.var('colors.ink'))
       .attr("stroke-width", 3);
 
-    const performanceData = preparePerformanceData(filteredData);
-
-    // Group performances by day
-    const dayGroups = d3.group(performanceData, d => `${d.year}-${d.dayOfYear}`);
-
     const showTooltip = (event, d) => {
       const dateStr = d.date.toLocaleDateString('en-GB', TOOLTIP_CONFIG.DATE_FORMAT);
       const receipts = d.currencyValue > 0
@@ -597,98 +689,6 @@ export function CalendarOfPerformances({ data }) {
       d3.select(tooltipRef.current).style('opacity', TOOLTIP_CONFIG.OPACITY_HIDDEN);
     };
 
-    // Process each day and determine what to draw
-    const barsToRender = [];
-    const markersToRender = [];
-
-    dayGroups.forEach((performances) => {
-      if (performances.length === 1) {
-        // Single performance
-        const perf = performances[0];
-        if (perf.currencyValue > 0) {
-          barsToRender.push({
-            ...perf,
-            fill: colorScale(perf.theatre),
-            barHeight: calculateBarHeight(perf.currencyValue, heightScale)
-          });
-        } else {
-          const stubProps = calculateStubHeight(perf, annualAverages, heightScale);
-
-          markersToRender.push({
-            ...perf,
-            fill: colorScale(perf.theatre),
-            xOffset: 0,
-            stubHeight: stubProps.height,
-            stubOpacity: stubProps.opacity
-          });
-        }
-      } else if (performances.length === 2) {
-        // Both theatres performed
-        const [perf1, perf2] = performances;
-        const bothHaveData = perf1.currencyValue > 0 && perf2.currencyValue > 0;
-        const neitherHaveData = perf1.currencyValue === 0 && perf2.currencyValue === 0;
-
-        if (bothHaveData) {
-          // Draw larger bar first, then smaller bar in grey on top
-          const larger = perf1.currencyValue >= perf2.currencyValue ? perf1 : perf2;
-          const smaller = perf1.currencyValue >= perf2.currencyValue ? perf2 : perf1;
-
-          barsToRender.push({
-            ...larger,
-            fill: colorScale(larger.theatre),
-            barHeight: calculateBarHeight(larger.currencyValue, heightScale)
-          });
-
-          barsToRender.push({
-            ...smaller,
-            fill: OVERLAY_GREY,
-            barHeight: calculateBarHeight(smaller.currencyValue, heightScale)
-          });
-        } else if (neitherHaveData) {
-          // Calculate stub heights and opacity based on strategy
-          const stubProps1 = calculateStubHeight(perf1, annualAverages, heightScale);
-          const stubProps2 = calculateStubHeight(perf2, annualAverages, heightScale);
-
-          // Two stub marks centered on top of each other (semi-transparent layering)
-          markersToRender.push({
-            ...perf1,
-            fill: colorScale(perf1.theatre),
-            xOffset: 0,
-            stubHeight: stubProps1.height,
-            stubOpacity: stubProps1.opacity
-          });
-          markersToRender.push({
-            ...perf2,
-            fill: colorScale(perf2.theatre),
-            xOffset: 0,
-            stubHeight: stubProps2.height,
-            stubOpacity: stubProps2.opacity
-          });
-        } else {
-          // One has data, one doesn't
-          const withData = perf1.currencyValue > 0 ? perf1 : perf2;
-          const withoutData = perf1.currencyValue > 0 ? perf2 : perf1;
-
-          barsToRender.push({
-            ...withData,
-            fill: colorScale(withData.theatre),
-            barHeight: calculateBarHeight(withData.currencyValue, heightScale)
-          });
-
-          const stubProps = calculateStubHeight(withoutData, annualAverages, heightScale);
-
-          markersToRender.push({
-            ...withoutData,
-            fill: colorScale(withoutData.theatre),
-            xOffset: 0,
-            stubHeight: stubProps.height,
-            stubOpacity: stubProps.opacity
-          });
-        }
-      }
-    });
-
-    // Store render data for magnifier
     renderDataRef.current = {
       barsToRender,
       markersToRender,
@@ -696,7 +696,7 @@ export function CalendarOfPerformances({ data }) {
       innerWidth,
       innerHeight,
       annualAverages,
-      heightScale
+      heightScale: processedData.heightScale
     };
 
     // Render bars
@@ -737,7 +737,9 @@ export function CalendarOfPerformances({ data }) {
 
     attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
 
-  }, [data, width, height, visibleTheatres, colorScale]);
+  }, [processedData, width, height]);
+
+  useChartRender(renderChart, [processedData, width], "Calendar Chart");
 
   useMagnifier({
     svgRef,

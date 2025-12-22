@@ -1,9 +1,11 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import { css } from "@generated/css";
 import { token } from "@generated/tokens";
 import { LatchButton } from "../Button/Button";
 import { PageWidth } from "../PageLayout/PageLayout";
+import { useChartRender } from "../../hooks/useChartRender";
+import { useResizeObserver } from "../../hooks/useResizeObserver";
 
 const PYRAMID_CONFIG = {
   MARGINS: {
@@ -446,28 +448,15 @@ export const YearByYearVisualization = ({ data }) => {
   const svgRefRevenue = useRef(null);
   const svgRefBoxPlot = useRef(null);
   const containerRef = useRef(null);
-  const [width, setWidth] = useState(1200);
+  const width = useResizeObserver(containerRef, 1200);
   const [includeOrdinary, setIncludeOrdinary] = useState(true);
   const [includeBenefit, setIncludeBenefit] = useState(true);
   const [includeCommand, setIncludeCommand] = useState(true);
 
   const noneSelected = !includeOrdinary && !includeCommand && !includeBenefit;
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        setWidth(entry.contentRect.width);
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!data || data.length === 0 || !svgRefCount.current || noneSelected) return;
+  const processedData = useMemo(() => {
+    if (!data || data.length === 0 || noneSelected) return null;
 
     const filteredData = data.filter(d => {
       if (d.isBenefit) return includeBenefit;
@@ -475,7 +464,17 @@ export const YearByYearVisualization = ({ data }) => {
       return includeOrdinary;
     });
 
-    const aggregated = aggregatePerformancesByYear(filteredData);
+    return {
+      performancesByYear: aggregatePerformancesByYear(filteredData),
+      revenueByYear: aggregateRevenueByYear(filteredData),
+      boxPlotByYear: aggregateBoxPlotByYear(filteredData)
+    };
+  }, [data, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
+
+  const renderCountChart = useCallback(() => {
+    if (!processedData) return;
+
+    const aggregated = processedData.performancesByYear;
 
     const height = 800;
     const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
@@ -498,19 +497,13 @@ export const YearByYearVisualization = ({ data }) => {
     renderTopAxes(g, xScale, innerHeight, centerX);
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
+  }, [processedData, width]);
 
-  useEffect(() => {
-    if (!data || data.length === 0 || !svgRefRevenue.current || noneSelected) return;
+  const renderRevenueChart = useCallback(() => {
+    if (!processedData) return;
 
-    const filteredData = data.filter(d => {
-      if (d.isBenefit) return includeBenefit;
-      if (d.isCommand) return includeCommand;
-      return includeOrdinary;
-    });
-
-    const aggregated = aggregateRevenueByYear(filteredData);
-    const boxPlotData = aggregateBoxPlotByYear(filteredData);
+    const aggregated = processedData.revenueByYear;
+    const boxPlotData = processedData.boxPlotByYear;
 
     const height = 800;
     const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
@@ -536,18 +529,12 @@ export const YearByYearVisualization = ({ data }) => {
     });
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
+  }, [processedData, width]);
 
-  useEffect(() => {
-    if (!data || data.length === 0 || !svgRefBoxPlot.current) return;
+  const renderBoxPlotChart = useCallback(() => {
+    if (!processedData) return;
 
-    const filteredData = data.filter(d => {
-      if (d.isBenefit) return includeBenefit;
-      if (d.isCommand) return includeCommand;
-      return includeOrdinary;
-    });
-
-    const aggregated = aggregateBoxPlotByYear(filteredData);
+    const aggregated = processedData.boxPlotByYear;
 
     const height = 800;
     const innerWidth = width - PYRAMID_CONFIG.MARGINS.left - PYRAMID_CONFIG.MARGINS.right;
@@ -573,7 +560,11 @@ export const YearByYearVisualization = ({ data }) => {
     });
     renderTheatreLabels(g, centerX, innerWidth);
 
-  }, [data, width, includeOrdinary, includeBenefit, includeCommand, noneSelected]);
+  }, [processedData, width]);
+
+  useChartRender(renderCountChart, [processedData, width], "Year-by-Year Performance Count");
+  useChartRender(renderRevenueChart, [processedData, width], "Year-by-Year Mean Revenue");
+  useChartRender(renderBoxPlotChart, [processedData, width], "Year-by-Year Revenue Distribution");
 
   return (
     <div className={css({ width: "100%" })}>
