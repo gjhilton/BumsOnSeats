@@ -48,7 +48,6 @@ const Footer = () => (
 );
 
 const PageContent = ({ html }) => (
-  <PageWidth>
     <div
       className={css({
         "& p": {
@@ -63,13 +62,14 @@ const PageContent = ({ html }) => (
       })}
       dangerouslySetInnerHTML={{ __html: html }}
     />
-  </PageWidth>
 );
 
 export const PageWidth = ({ children }) => (
   <div
     className={css({
-      padding: "xl 2xl"
+      paddingLeft: "2xl",
+	  paddingRight: "2xl",
+	  border: "10px solid red"
     })}
   >
     {children}
@@ -84,9 +84,7 @@ export const PageLayout = ({ title, children }) => {
       <PageWidth>
         <Header />
         <PageTitle>{title}</PageTitle>
-      </PageWidth>
       {children}
-      <PageWidth>
         <Footer />
       </PageWidth>
     </div>

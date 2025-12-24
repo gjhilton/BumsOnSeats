@@ -3,7 +3,6 @@ import * as d3 from "d3";
 import { css } from "@generated/css";
 import { token } from "@generated/tokens";
 import { LatchButton } from "../Button/Button";
-import { PageWidth } from "../PageLayout/PageLayout";
 import { useChartRender } from "../../hooks/useChartRender";
 import { useResizeObserver } from "../../hooks/useResizeObserver";
 import { THEATRE_COLORS } from "@/constants/theatre";
@@ -530,7 +529,7 @@ export const YearByYearVisualization = ({ data }) => {
 
   return (
     <div className={css({ width: "100%" })}>
-      <PageWidth>
+      <>
         <div ref={containerRef} className={css({ width: "100%" })}>
           <div className={css({ display: "flex", gap: "md", mb: "lg" })}>
             <LatchButton
@@ -569,9 +568,9 @@ export const YearByYearVisualization = ({ data }) => {
             </div>
           )}
         </div>
-      </PageWidth>
+      </>
       {!noneSelected && (
-        <PageWidth>
+        <>
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Revenue Distribution
           </h2>
@@ -604,18 +603,18 @@ export const YearByYearVisualization = ({ data }) => {
               </div>
             </div>
             <svg ref={svgRefBoxPlot} />
-        </PageWidth>
+        </>
       )}
       {!noneSelected && (
-        <PageWidth>
+        <>
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Mean Revenue
           </h2>
           <svg ref={svgRefRevenue} />
-        </PageWidth>
+        </>
       )}
       {!noneSelected && (
-        <PageWidth>
+        <>
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Performance Count
           </h2>
@@ -639,7 +638,7 @@ export const YearByYearVisualization = ({ data }) => {
             </div>
           </div>
           <svg ref={svgRefCount} />
-        </PageWidth>
+        </>
       )}
     </div>
   );

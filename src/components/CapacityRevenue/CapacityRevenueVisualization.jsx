@@ -2,7 +2,6 @@ import { useRef, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import { css } from "@generated/css";
 import { token } from "@generated/tokens";
-import { PageWidth } from "../PageLayout/PageLayout";
 import { getDayOfWeek } from "@lib/getDayOfWeek";
 import { useChartRender } from "../../hooks/useChartRender";
 import { useResizeObserver } from "../../hooks/useResizeObserver";
@@ -552,31 +551,23 @@ export const CapacityRevenueVisualization = ({ data }) => {
 
   return (
     <div className={css({ width: "100%" })}>
-      <PageWidth>
         <p className={css({ fontSize: "lg", color: "ink", marginBottom: "md" })}>
           Showing {scatterDataCount.toLocaleString()} performances with non-zero capacity data out of {totalCount.toLocaleString()} total performances.
         </p>
-      </PageWidth>
-      <PageWidth>
         <div ref={containerRef} className={css({ width: "100%" })}>
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
             Capacity by Day of Week
           </h2>
           <svg ref={svgRefCapacity} />
         </div>
-      </PageWidth>
-      <PageWidth>
         <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
           Revenue by Day of Week
         </h2>
         <svg ref={svgRefRevenue} />
-      </PageWidth>
-      <PageWidth>
         <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
           Performance Types by Day of Week
         </h2>
         <svg ref={svgRefPerformances} />
-      </PageWidth>
     </div>
   );
 };
