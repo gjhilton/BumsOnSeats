@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { debounce } from '@/utils/debounce';
+import { debounce } from '@/lib/debounce';
 
 export const useResizeObserver = (ref, initialWidth = 1200) => {
   const [width, setWidth] = useState(initialWidth);

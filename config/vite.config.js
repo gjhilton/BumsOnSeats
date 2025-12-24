@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import { plugin as markdown } from 'vite-plugin-markdown'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -12,10 +11,6 @@ export default defineConfig({
     root: path.resolve(__dirname, '../src/html'),
     publicDir: path.resolve(__dirname, '../public'),
     plugins: [
-        TanStackRouterVite({
-            routesDirectory: path.resolve(__dirname, '../src/routes'),
-            generatedRouteTree: path.resolve(__dirname, '../src/routeTree.gen.ts'),
-        }),
         react(),
         markdown({ mode: 'html' }),
     ],

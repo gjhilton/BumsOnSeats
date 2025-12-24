@@ -21,10 +21,14 @@ const Header = () => (
     <Link
       to="/"
       className={css({
-        textDecoration: "none",
+        textDecoration: "none !important",
         fontSize: "xl",
+        display: "inline-block",
+        paddingBottom: "1px",
+        borderBottom: "2px solid",
+        borderColor: "ink",
         _hover: {
-          textDecoration: "underline"
+          textDecoration: "none !important"
         }
       })}
     >

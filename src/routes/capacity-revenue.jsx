@@ -1,6 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createRoute } from "@tanstack/react-router";
 import { CapacityRevenueDataContainer } from "@components/CapacityRevenue";
+import { Route as rootRoute } from "./__root";
 
-export const Route = createFileRoute("/capacity-revenue")({
+export const Route = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/capacity-revenue",
   component: CapacityRevenueDataContainer,
 });
