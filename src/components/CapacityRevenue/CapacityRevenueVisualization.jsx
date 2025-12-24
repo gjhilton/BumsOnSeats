@@ -6,6 +6,7 @@ import { PageWidth } from "../PageLayout/PageLayout";
 import { getDayOfWeek } from "@lib/getDayOfWeek";
 import { useChartRender } from "../../hooks/useChartRender";
 import { useResizeObserver } from "../../hooks/useResizeObserver";
+import { THEATRE_COLORS, getTheatreColor, createTheatreTint } from "@/constants/theatre";
 
 const CHART_CONFIG = {
   MARGINS: { top: 60, right: 40, bottom: 80, left: 60 },
@@ -14,11 +15,6 @@ const CHART_CONFIG = {
   AXIS_FONT_SIZE: "14px",
   LABEL_FONT_SIZE: "16px",
   TITLE_FONT_SIZE: "18px",
-};
-
-const THEATRE_COLORS = {
-  DRURY: token.var("colors.theatreA"),
-  COVENT: token.var("colors.theatreB"),
 };
 
 const DAY_ORDER = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -314,16 +310,13 @@ const renderPerformanceChart = (svgRef, performanceData, width) => {
   const theatreOffset = 20;
   const barWidth = 30;
 
-  const druryHex = "#E53935";
-  const coventHex = "#1E88E5";
+  const druryOrdinary = getTheatreColor('DRURY');
+  const druryBenefit = createTheatreTint('DRURY', 0.5);
+  const druryCommand = createTheatreTint('DRURY', 0.75);
 
-  const druryOrdinary = druryHex;
-  const druryBenefit = d3.interpolate(druryHex, "#FFFFFF")(0.5);
-  const druryCommand = d3.interpolate(druryHex, "#FFFFFF")(0.75);
-
-  const coventOrdinary = coventHex;
-  const coventBenefit = d3.interpolate(coventHex, "#FFFFFF")(0.5);
-  const coventCommand = d3.interpolate(coventHex, "#FFFFFF")(0.75);
+  const coventOrdinary = getTheatreColor('COVENT');
+  const coventBenefit = createTheatreTint('COVENT', 0.5);
+  const coventCommand = createTheatreTint('COVENT', 0.75);
 
   performanceData.forEach((d) => {
     const centerX = xScale(d.dayOfWeek) + xScale.bandwidth() / 2 - theatreOffset;

@@ -5,7 +5,7 @@ export const MobileWarningBanner = () => {
     <div
       className={css({
         display: "block",
-        imd: {
+        md: {
           display: "none",
         },
         backgroundColor: "#fc0",

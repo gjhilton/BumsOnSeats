@@ -6,6 +6,7 @@ import { LatchButton } from "../Button/Button";
 import { PageWidth } from "../PageLayout/PageLayout";
 import { useChartRender } from "../../hooks/useChartRender";
 import { useResizeObserver } from "../../hooks/useResizeObserver";
+import { THEATRE_COLORS } from "@/constants/theatre";
 
 const PYRAMID_CONFIG = {
   MARGINS: {
@@ -20,11 +21,6 @@ const PYRAMID_CONFIG = {
   LABEL_FONT_SIZE: "16px",
   TITLE_FONT_SIZE: "20px",
   GUTTER_WIDTH: 60
-};
-
-const THEATRE_COLORS = {
-  DRURY: token.var('colors.theatreA'),
-  COVENT: token.var('colors.theatreB')
 };
 
 const aggregatePerformancesByYear = (data) => {
@@ -214,96 +210,99 @@ const renderTopAxes = (g, xScale, innerHeight, centerX, options = {}) => {
     .attr("opacity", 0.3);
 };
 
-const renderDruryBars = (g, data, xScale, yScale, centerX) => {
+const renderSplitBars = (g, data, xScale, yScale, centerX, { theatre, color, isNegative }) => {
   const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+  const prefix = theatre.toLowerCase();
+  const withRevenueKey = `${prefix}WithRevenue`;
+  const countKey = `${prefix}Count`;
 
   // Bar for performances with revenue (solid)
   g.append("g")
-    .attr("class", "drury-bars-with-revenue")
+    .attr("class", `${prefix}-bars-with-revenue`)
     .selectAll("rect")
     .data(data)
     .join("rect")
-    .attr("x", d => xScale(-d.druryWithRevenue))
+    .attr("x", d => isNegative
+      ? xScale(-d[withRevenueKey])
+      : centerX + gutterHalf)
     .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, centerX - xScale(-d.druryWithRevenue) - gutterHalf))
+    .attr("width", d => isNegative
+      ? Math.max(0, centerX - xScale(-d[withRevenueKey]) - gutterHalf)
+      : Math.max(0, xScale(d[withRevenueKey]) - centerX - gutterHalf))
     .attr("height", yScale.bandwidth())
-    .attr("fill", THEATRE_COLORS.DRURY)
+    .attr("fill", color)
     .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
 
   // Bar for performances without revenue (50% opacity, stacked)
   g.append("g")
-    .attr("class", "drury-bars-without-revenue")
+    .attr("class", `${prefix}-bars-without-revenue`)
     .selectAll("rect")
     .data(data)
     .join("rect")
-    .attr("x", d => xScale(-d.druryCount))
+    .attr("x", d => isNegative
+      ? xScale(-d[countKey])
+      : xScale(d[withRevenueKey]))
     .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, xScale(-d.druryWithRevenue) - xScale(-d.druryCount)))
+    .attr("width", d => isNegative
+      ? Math.max(0, xScale(-d[withRevenueKey]) - xScale(-d[countKey]))
+      : Math.max(0, xScale(d[countKey]) - xScale(d[withRevenueKey])))
     .attr("height", yScale.bandwidth())
-    .attr("fill", THEATRE_COLORS.DRURY)
+    .attr("fill", color)
     .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY * 0.5);
+};
+
+const renderSimpleBars = (g, data, xScale, yScale, centerX, { theatre, color, isNegative }) => {
+  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+  const prefix = theatre.toLowerCase();
+  const countKey = `${prefix}Count`;
+
+  g.append("g")
+    .attr("class", `${prefix}-bars`)
+    .selectAll("rect")
+    .data(data)
+    .join("rect")
+    .attr("x", d => isNegative
+      ? xScale(-d[countKey])
+      : centerX + gutterHalf)
+    .attr("y", d => yScale(d.year))
+    .attr("width", d => isNegative
+      ? Math.max(0, centerX - xScale(-d[countKey]) - gutterHalf)
+      : Math.max(0, xScale(d[countKey]) - centerX - gutterHalf))
+    .attr("height", yScale.bandwidth())
+    .attr("fill", color)
+    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+};
+
+const renderDruryBars = (g, data, xScale, yScale, centerX) => {
+  renderSplitBars(g, data, xScale, yScale, centerX, {
+    theatre: 'drury',
+    color: THEATRE_COLORS.DRURY,
+    isNegative: true
+  });
 };
 
 const renderCoventBars = (g, data, xScale, yScale, centerX) => {
-  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
-
-  // Bar for performances with revenue (solid)
-  g.append("g")
-    .attr("class", "covent-bars-with-revenue")
-    .selectAll("rect")
-    .data(data)
-    .join("rect")
-    .attr("x", centerX + gutterHalf)
-    .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, xScale(d.coventWithRevenue) - centerX - gutterHalf))
-    .attr("height", yScale.bandwidth())
-    .attr("fill", THEATRE_COLORS.COVENT)
-    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
-
-  // Bar for performances without revenue (50% opacity, stacked)
-  g.append("g")
-    .attr("class", "covent-bars-without-revenue")
-    .selectAll("rect")
-    .data(data)
-    .join("rect")
-    .attr("x", d => xScale(d.coventWithRevenue))
-    .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, xScale(d.coventCount) - xScale(d.coventWithRevenue)))
-    .attr("height", yScale.bandwidth())
-    .attr("fill", THEATRE_COLORS.COVENT)
-    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY * 0.5);
+  renderSplitBars(g, data, xScale, yScale, centerX, {
+    theatre: 'covent',
+    color: THEATRE_COLORS.COVENT,
+    isNegative: false
+  });
 };
 
 const renderDrurySimpleBars = (g, data, xScale, yScale, centerX) => {
-  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
-
-  g.append("g")
-    .attr("class", "drury-bars")
-    .selectAll("rect")
-    .data(data)
-    .join("rect")
-    .attr("x", d => xScale(-d.druryCount))
-    .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, centerX - xScale(-d.druryCount) - gutterHalf))
-    .attr("height", yScale.bandwidth())
-    .attr("fill", THEATRE_COLORS.DRURY)
-    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+  renderSimpleBars(g, data, xScale, yScale, centerX, {
+    theatre: 'drury',
+    color: THEATRE_COLORS.DRURY,
+    isNegative: true
+  });
 };
 
 const renderCoventSimpleBars = (g, data, xScale, yScale, centerX) => {
-  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
-
-  g.append("g")
-    .attr("class", "covent-bars")
-    .selectAll("rect")
-    .data(data)
-    .join("rect")
-    .attr("x", centerX + gutterHalf)
-    .attr("y", d => yScale(d.year))
-    .attr("width", d => Math.max(0, xScale(d.coventCount) - centerX - gutterHalf))
-    .attr("height", yScale.bandwidth())
-    .attr("fill", THEATRE_COLORS.COVENT)
-    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
+  renderSimpleBars(g, data, xScale, yScale, centerX, {
+    theatre: 'covent',
+    color: THEATRE_COLORS.COVENT,
+    isNegative: false
+  });
 };
 
 const renderTheatreLabels = (g, centerX, innerWidth) => {
@@ -328,39 +327,43 @@ const renderTheatreLabels = (g, centerX, innerWidth) => {
     .text("Covent Garden");
 };
 
-const renderDruryBoxPlots = (g, data, xScale, yScale, centerX) => {
-  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
+const renderBoxPlots = (g, data, xScale, yScale, { theatre, color, isNegative }) => {
   const boxWidth = yScale.bandwidth();
+  const sign = isNegative ? -1 : 1;
 
   const boxPlots = g.append("g")
-    .attr("class", "drury-boxplots")
+    .attr("class", `${theatre.toLowerCase()}-boxplots`)
     .selectAll("g")
-    .data(data.filter(d => d.drury))
+    .data(data.filter(d => d[theatre.toLowerCase()]))
     .join("g")
     .attr("transform", d => `translate(0, ${yScale(d.year)})`);
 
+  const stats = d => d[theatre.toLowerCase()];
+
   // Whisker line (min to max)
   boxPlots.append("line")
-    .attr("x1", d => xScale(-d.drury.min))
-    .attr("x2", d => xScale(-d.drury.max))
+    .attr("x1", d => xScale(sign * stats(d).min))
+    .attr("x2", d => xScale(sign * stats(d).max))
     .attr("y1", boxWidth / 2)
     .attr("y2", boxWidth / 2)
-    .attr("stroke", THEATRE_COLORS.DRURY)
+    .attr("stroke", color)
     .attr("stroke-width", 1);
 
   // Box (Q1 to Q3)
   boxPlots.append("rect")
-    .attr("x", d => xScale(-d.drury.q3))
+    .attr("x", d => isNegative ? xScale(-stats(d).q3) : xScale(stats(d).q1))
     .attr("y", boxWidth * 0.25)
-    .attr("width", d => Math.max(0, xScale(-d.drury.q1) - xScale(-d.drury.q3)))
+    .attr("width", d => isNegative
+      ? Math.max(0, xScale(-stats(d).q1) - xScale(-stats(d).q3))
+      : Math.max(0, xScale(stats(d).q3) - xScale(stats(d).q1)))
     .attr("height", boxWidth * 0.5)
-    .attr("fill", THEATRE_COLORS.DRURY)
+    .attr("fill", color)
     .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
 
   // Median line
   boxPlots.append("line")
-    .attr("x1", d => xScale(-d.drury.median))
-    .attr("x2", d => xScale(-d.drury.median))
+    .attr("x1", d => xScale(sign * stats(d).median))
+    .attr("x2", d => xScale(sign * stats(d).median))
     .attr("y1", boxWidth * 0.25)
     .attr("y2", boxWidth * 0.75)
     .attr("stroke", token.var('colors.ink'))
@@ -368,78 +371,37 @@ const renderDruryBoxPlots = (g, data, xScale, yScale, centerX) => {
 
   // Min whisker cap
   boxPlots.append("line")
-    .attr("x1", d => xScale(-d.drury.min))
-    .attr("x2", d => xScale(-d.drury.min))
+    .attr("x1", d => xScale(sign * stats(d).min))
+    .attr("x2", d => xScale(sign * stats(d).min))
     .attr("y1", boxWidth * 0.35)
     .attr("y2", boxWidth * 0.65)
-    .attr("stroke", THEATRE_COLORS.DRURY)
+    .attr("stroke", color)
     .attr("stroke-width", 1);
 
   // Max whisker cap
   boxPlots.append("line")
-    .attr("x1", d => xScale(-d.drury.max))
-    .attr("x2", d => xScale(-d.drury.max))
+    .attr("x1", d => xScale(sign * stats(d).max))
+    .attr("x2", d => xScale(sign * stats(d).max))
     .attr("y1", boxWidth * 0.35)
     .attr("y2", boxWidth * 0.65)
-    .attr("stroke", THEATRE_COLORS.DRURY)
+    .attr("stroke", color)
     .attr("stroke-width", 1);
 };
 
+const renderDruryBoxPlots = (g, data, xScale, yScale, centerX) => {
+  renderBoxPlots(g, data, xScale, yScale, {
+    theatre: 'drury',
+    color: THEATRE_COLORS.DRURY,
+    isNegative: true
+  });
+};
+
 const renderCoventBoxPlots = (g, data, xScale, yScale, centerX) => {
-  const gutterHalf = PYRAMID_CONFIG.GUTTER_WIDTH / 2;
-  const boxWidth = yScale.bandwidth();
-
-  const boxPlots = g.append("g")
-    .attr("class", "covent-boxplots")
-    .selectAll("g")
-    .data(data.filter(d => d.covent))
-    .join("g")
-    .attr("transform", d => `translate(0, ${yScale(d.year)})`);
-
-  // Whisker line (min to max)
-  boxPlots.append("line")
-    .attr("x1", d => xScale(d.covent.min))
-    .attr("x2", d => xScale(d.covent.max))
-    .attr("y1", boxWidth / 2)
-    .attr("y2", boxWidth / 2)
-    .attr("stroke", THEATRE_COLORS.COVENT)
-    .attr("stroke-width", 1);
-
-  // Box (Q1 to Q3)
-  boxPlots.append("rect")
-    .attr("x", d => xScale(d.covent.q1))
-    .attr("y", boxWidth * 0.25)
-    .attr("width", d => Math.max(0, xScale(d.covent.q3) - xScale(d.covent.q1)))
-    .attr("height", boxWidth * 0.5)
-    .attr("fill", THEATRE_COLORS.COVENT)
-    .attr("opacity", PYRAMID_CONFIG.BAR_OPACITY);
-
-  // Median line
-  boxPlots.append("line")
-    .attr("x1", d => xScale(d.covent.median))
-    .attr("x2", d => xScale(d.covent.median))
-    .attr("y1", boxWidth * 0.25)
-    .attr("y2", boxWidth * 0.75)
-    .attr("stroke", token.var('colors.ink'))
-    .attr("stroke-width", 2);
-
-  // Min whisker cap
-  boxPlots.append("line")
-    .attr("x1", d => xScale(d.covent.min))
-    .attr("x2", d => xScale(d.covent.min))
-    .attr("y1", boxWidth * 0.35)
-    .attr("y2", boxWidth * 0.65)
-    .attr("stroke", THEATRE_COLORS.COVENT)
-    .attr("stroke-width", 1);
-
-  // Max whisker cap
-  boxPlots.append("line")
-    .attr("x1", d => xScale(d.covent.max))
-    .attr("x2", d => xScale(d.covent.max))
-    .attr("y1", boxWidth * 0.35)
-    .attr("y2", boxWidth * 0.65)
-    .attr("stroke", THEATRE_COLORS.COVENT)
-    .attr("stroke-width", 1);
+  renderBoxPlots(g, data, xScale, yScale, {
+    theatre: 'covent',
+    color: THEATRE_COLORS.COVENT,
+    isNegative: false
+  });
 };
 
 

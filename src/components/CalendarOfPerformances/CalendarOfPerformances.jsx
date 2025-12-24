@@ -6,18 +6,9 @@ import { useMagnifier } from "../../hooks/useMagnifier";
 import { Button, LatchButton } from "../Button/Button";
 import { useChartRender } from "../../hooks/useChartRender";
 import { useResizeObserver } from "../../hooks/useResizeObserver";
+import { THEATRES, THEATRE_COLORS } from "@/constants/theatre";
 
-const THEATRES = {
-  DRURY_LANE: "Drury Lane",
-  COVENT_GARDEN: "Covent Garden"
-};
-
-const THEATRE_COLORS = {
-  [THEATRES.DRURY_LANE]: token.var('colors.theatreA'),
-  [THEATRES.COVENT_GARDEN]: token.var('colors.theatreB')
-};
-
-const OVERLAY_GREY = token.var('colors.theatresBoth');
+const OVERLAY_GREY = THEATRE_COLORS.BOTH;
 
 const CHART_MARGINS = {
   top: 50,

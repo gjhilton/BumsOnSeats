@@ -52,11 +52,7 @@ const Paper = ({ children }) => (
   </div>
 );
 
-const Benefit = (
-  {
-    // fontSource
-  },
-) => (
+const Benefit = () => (
   <div
     className={css({
       display: "block",
@@ -79,11 +75,7 @@ const Benefit = (
   </div>
 );
 
-const Theatres = (
-  {
-    //fontSource
-  },
-) => (
+const Theatres = () => (
   <div
     className={css({
       display: "block",
@@ -104,11 +96,7 @@ const Theatres = (
   </div>
 );
 
-const Today = (
-  {
-    // fontSource
-  },
-) => {
+const Today = () => {
   const now = new Date();
   const dayOfWeek = now.toLocaleDateString("en-GB", { weekday: "long" });
   const month = now.toLocaleDateString("en-GB", { month: "long" });
@@ -143,13 +131,7 @@ const Today = (
   );
 };
 
-const Act = ({
-  children,
-  title,
-  link,
-  number
-  // , fontSource
-}) => {
+const Act = ({ children, title, link, number }) => {
   const content = (
     <>
       <h3><Caps>ACT</Caps> {number}: <Italic>{title}</Italic></h3>
@@ -174,10 +156,7 @@ const Act = ({
 }
 
 
-const Bodycopy = ({
-  children,
-  // , fontSource
-}) => (
+const Bodycopy = ({ children }) => (
   <div
     className={css({
       fontWeight: "500",
@@ -192,10 +171,7 @@ const Bodycopy = ({
   </div>
 );
 
-const Caps = ({
-  children,
-  // , fontSource
-}) => (
+const Caps = ({ children }) => (
   <span
     className={css({
       letterSpacing: "0.3rem",
@@ -206,10 +182,7 @@ const Caps = ({
   </span>
 );
 
-const Italic = ({
-  children,
-  // , fontSource
-}) => (
+const Italic = ({ children }) => (
   <span
     className={css({
       fontStyle: "italic",
@@ -219,11 +192,7 @@ const Italic = ({
   </span>
 );
 
-const Pretitle = (
-  {
-    // fontSource
-  },
-) => (
+const Pretitle = () => (
   <div
     className={css({
       display: "block",
@@ -235,11 +204,7 @@ const Pretitle = (
   </div>
 );
 
-const Title = (
-  {
-    // fontSource
-  },
-) => (
+const Title = () => (
   <div
     className={css({
       margin: "3em 0",
@@ -277,12 +242,7 @@ const Title = (
   </div>
 );
 
-const Smallcaps = (
-  {
-    children
-    // , fontSource
-  },
-) => (
+const Smallcaps = ({ children }) => (
   <span
     className={css({
       textTransform: "lowercase",
@@ -293,11 +253,7 @@ const Smallcaps = (
   </span>
 );
 
-const Footer = (
-  {
-    // , fontSource
-  },
-) => (
+const Footer = () => (
   <div
     className={css({
       position: "absolute",
@@ -334,12 +290,7 @@ const Footer = (
   </div>
 );
 
-const Paragraph = (
-  {
-    children
-    // , fontSource
-  },
-) => (
+const Paragraph = ({ children }) => (
   <span
     className={css({
       display: "block",
@@ -360,13 +311,7 @@ const Paragraph = (
 
 );
 
-export function Playbill(
-  {
-    //fontSource
-  },
-) {
-  // e.g. const letterSpacing = fontSource === 'local' ? '0.04em' : '0.05em'
-
+export function Playbill() {
   return (
     <Paper>
       <div

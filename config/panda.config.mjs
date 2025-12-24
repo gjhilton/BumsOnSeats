@@ -1,5 +1,14 @@
 import { defineConfig } from '@pandacss/dev'
 
+// Single source of truth for all color values
+export const COLORS = {
+    ink: '#ffffff',
+    paper: '#000000',
+    theatreA: '#E53935',
+    theatreB: '#1E88E5',
+    theatresBoth: '#7E3BA6'
+}
+
 export default defineConfig({
     // Where to look for your css declarations
     include: ['./src/**/*.{js,jsx,ts,tsx}'],
@@ -22,11 +31,11 @@ export default defineConfig({
         extend: {
             tokens: {
                 colors: {
-                    ink: { value: '#ffffff' },
-                    paper: { value: '#000000' },
-                    theatreA: { value: '#E53935' },
-                    theatreB: { value: '#1E88E5' },
-                    theatresBoth: { value: '#7E3BA6' },
+                    ink: { value: COLORS.ink },
+                    paper: { value: COLORS.paper },
+                    theatreA: { value: COLORS.theatreA },
+                    theatreB: { value: COLORS.theatreB },
+                    theatresBoth: { value: COLORS.theatresBoth },
                 },
                 spacing: {
                     sm: { value: '0.5rem' },
