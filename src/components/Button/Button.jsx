@@ -1,10 +1,7 @@
 import { css } from "@generated/css";
 
 const BUTTON_BASE_STYLES = {
-  paddingTop: "0.5rem",
-  paddingBottom: "0.5rem",
-  paddingLeft: "md",
-  paddingRight: "md",
+  padding: "sm md",
   fontSize: "md",
   lineHeight: "1.5",
   background: "transparent",

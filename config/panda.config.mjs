@@ -6,7 +6,10 @@ export const COLORS = {
     paper: '#000000',
     theatreA: '#E53935',
     theatreB: '#1E88E5',
-    theatresBoth: '#7E3BA6'
+    theatresBoth: '#7E3BA6',
+    warning: '#fc0',
+    warningText: '#000',
+    error: '#E53935'
 }
 
 export default defineConfig({
@@ -36,6 +39,9 @@ export default defineConfig({
                     theatreA: { value: COLORS.theatreA },
                     theatreB: { value: COLORS.theatreB },
                     theatresBoth: { value: COLORS.theatresBoth },
+                    warning: { value: COLORS.warning },
+                    warningText: { value: COLORS.warningText },
+                    error: { value: COLORS.error },
                 },
                 spacing: {
                     sm: { value: '0.5rem' },

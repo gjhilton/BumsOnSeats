@@ -76,7 +76,7 @@ html[data-font-source="typekit"] .headline {
 #### JavaScript/React Method
 
 ```jsx
-import { useFontSource } from './utils/useFontSource';
+import { useFontSource } from './hooks/useFontSource';
 
 function MyComponent() {
     const fontSource = useFontSource();
@@ -95,7 +95,7 @@ function MyComponent() {
 
 ```jsx
 import { css } from '@generated/css';
-import { useFontSource } from './utils/useFontSource';
+import { useFontSource } from './hooks/useFontSource';
 
 function MyComponent() {
     const fontSource = useFontSource();

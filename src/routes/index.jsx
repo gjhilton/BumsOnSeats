@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Playbill } from "../components/Playbill/Playbill";
-import { useFontSource } from "../utils/useFontSource";
+import { useFontSource } from "../hooks/useFontSource";
 
 export const Route = createFileRoute("/")({
   component: Index,

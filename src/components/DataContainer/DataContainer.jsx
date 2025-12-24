@@ -17,7 +17,7 @@ const MessagePage = ({ title, titleColor, children }) => (
 const LoadingComponent = () => <LoadingSpinner />;
 
 const ErrorComponent = ({ message }) => (
-  <MessagePage title="Error loading data" titleColor="accent">
+  <MessagePage title="Error loading data" titleColor="error">
     <p>{message}</p>
   </MessagePage>
 );
@@ -34,7 +34,8 @@ export function DataContainer({ loadData, children }) {
       .then(setData)
       .catch(setError)
       .finally(() => setLoading(false));
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return <LoadingComponent />;

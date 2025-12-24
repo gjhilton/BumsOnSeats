@@ -8,8 +8,8 @@ export const MobileWarningBanner = () => {
         md: {
           display: "none",
         },
-        backgroundColor: "#fc0",
-        color: "#000",
+        backgroundColor: "warning",
+        color: "warningText",
         padding: "md",
         textAlign: "center",
         fontSize: "lg",
