@@ -68,8 +68,7 @@ export const PageWidth = ({ children }) => (
   <div
     className={css({
       paddingLeft: "2xl",
-	  paddingRight: "2xl",
-	  border: "10px solid red"
+      paddingRight: "2xl"
     })}
   >
     {children}

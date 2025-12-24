@@ -8,8 +8,8 @@ import { useResizeObserver } from "../../hooks/useResizeObserver";
 import { THEATRE_COLORS, getTheatreColor, createTheatreTint } from "@/constants/theatre";
 
 const CHART_CONFIG = {
-  MARGINS: { top: 60, right: 40, bottom: 80, left: 60 },
-  MARGINS_PERFORMANCE: { top: 100, right: 40, bottom: 80, left: 60 },
+  MARGINS: { top: 60, right: 40, bottom: 80, left: 80 },
+  MARGINS_PERFORMANCE: { top: 100, right: 40, bottom: 80, left: 80 },
   BAR_OPACITY: 0.85,
   AXIS_FONT_SIZE: "14px",
   LABEL_FONT_SIZE: "16px",
