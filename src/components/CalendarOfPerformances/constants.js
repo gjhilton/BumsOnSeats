@@ -57,7 +57,7 @@ export const TOOLTIP_CONFIG = {
   OFFSET_X: 10,
   OFFSET_Y: -10,
   PADDING: "0.5rem 0.75rem",
-  BACKGROUND: "rgba(0, 0, 0, 0.85)",
+  BACKGROUND: "rgb(0, 0, 0)",
   BORDER_RADIUS: "4px",
   FONT_SIZE: "12px",
   OPACITY_HIDDEN: 0,

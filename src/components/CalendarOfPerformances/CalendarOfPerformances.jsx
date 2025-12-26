@@ -297,25 +297,30 @@ export function CalendarOfPerformances({ data }) {
 
     const { yearStart, yearEnd, minDataYear, yScale, barsToRender, markersToRender } = processedData;
 
-    d3.select(svgRef.current).selectAll("*").remove();
+    const svg = d3.select(svgRef.current);
+
+    // Remove previous chart content (but preserve defs and magnifier)
+    svg.select(".chart-content").remove();
 
     const innerWidth = width - CHART_MARGINS.left - CHART_MARGINS.right;
     const innerHeight = height - CHART_MARGINS.top - CHART_MARGINS.bottom;
 
     const xScaleForLabels = createXScale(innerWidth, DAYS_IN_REGULAR_YEAR);
 
-    const svg = d3
-      .select(svgRef.current)
-      .attr("width", width)
+    svg.attr("width", width)
       .attr("height", height);
 
+    // Create a group for all chart content
+    const chartGroup = svg.append("g")
+      .attr("class", "chart-content");
+
     // Add black background
-    svg.append("rect")
+    chartGroup.append("rect")
       .attr("width", width)
       .attr("height", height)
       .attr("fill", token.var('colors.paper'));
 
-    const g = svg
+    const g = chartGroup
       .append("g")
       .attr("transform", `translate(${CHART_MARGINS.left},${CHART_MARGINS.top})`);
 
@@ -415,6 +420,20 @@ export function CalendarOfPerformances({ data }) {
 
     attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
 
+    // Ensure magnifier is always last (on top) in the DOM
+    const magnifierGroup = svg.select(".magnifier");
+    if (!magnifierGroup.empty()) {
+      magnifierGroup.raise();
+    }
+    const defsElement = svg.select("defs");
+    if (!defsElement.empty()) {
+      defsElement.raise();
+      // Put magnifier after defs
+      if (!magnifierGroup.empty()) {
+        magnifierGroup.raise();
+      }
+    }
+
   }, [processedData, width, height]);
 
   useChartRender(renderChart, [processedData, width], "Calendar Chart");
@@ -443,7 +462,10 @@ export function CalendarOfPerformances({ data }) {
 
       <Legend legendHeightScale={legendHeightScale} visibleTheatres={visibleTheatres} width={width} data={data} />
 
-      <svg ref={svgRef}></svg>
+      <svg
+        ref={svgRef}
+        style={{ cursor: "pointer" }}
+      ></svg>
 
       <Tooltip tooltipRef={tooltipRef} />
     </div>

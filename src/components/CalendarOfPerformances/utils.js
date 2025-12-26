@@ -142,7 +142,7 @@ export function attachTooltipHandlers(selection, showTooltip, hideTooltip) {
     .on('mouseenter', showTooltip)
     .on('mousemove', showTooltip)
     .on('mouseleave', hideTooltip)
-    .style('cursor', 'pointer');
+    .style('cursor', 'zoom-in');
 }
 
 export function calculateBarHeight(currencyValue, heightScale) {

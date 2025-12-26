@@ -7,9 +7,11 @@ export function Tooltip({ tooltipRef }) {
       ref={tooltipRef}
       className={css({
         position: "fixed",
-        padding: TOOLTIP_CONFIG.PADDING,
-        background: TOOLTIP_CONFIG.BACKGROUND,
+        padding: "10px",
+        background: "black",
         color: THEME.BORDER_WHITE,
+        border: "1px solid",
+        borderColor: "ink",
         borderRadius: TOOLTIP_CONFIG.BORDER_RADIUS,
         fontSize: TOOLTIP_CONFIG.FONT_SIZE,
         pointerEvents: "none",
@@ -17,6 +19,7 @@ export function Tooltip({ tooltipRef }) {
         transition: TOOLTIP_CONFIG.TRANSITION,
         zIndex: TOOLTIP_CONFIG.Z_INDEX,
         lineHeight: TOOLTIP_CONFIG.LINE_HEIGHT,
+        maxWidth: "300px"
       })}
     />
   );
