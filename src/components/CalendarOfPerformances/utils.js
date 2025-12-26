@@ -179,57 +179,118 @@ export function renderYAxis(g, yScale, tickYears, axisPosition, innerWidth, minD
     });
 }
 
+function inlineComputedStyles(svgElement) {
+  const cloned = svgElement.cloneNode(true);
+
+  // Get all elements from both original and clone
+  const originalElements = [svgElement, ...svgElement.querySelectorAll('*')];
+  const clonedElements = [cloned, ...cloned.querySelectorAll('*')];
+
+  // CSS properties that are relevant for SVG
+  const relevantProps = [
+    'fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin',
+    'opacity', 'fill-opacity', 'stroke-opacity',
+    'font-family', 'font-size', 'font-weight', 'font-style',
+    'text-anchor', 'dominant-baseline',
+    'mix-blend-mode', 'transform'
+  ];
+
+  clonedElements.forEach((clonedEl, index) => {
+    const originalEl = originalElements[index];
+    const computedStyle = window.getComputedStyle(originalEl);
+
+    relevantProps.forEach(prop => {
+      const value = computedStyle.getPropertyValue(prop);
+      if (value && value !== 'none' && value !== 'normal') {
+        clonedEl.style[prop] = value;
+      }
+    });
+  });
+
+  return cloned;
+}
+
 export function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
   const svgElement = svgRef.current;
-  if (!svgElement) return;
+  if (!svgElement) {
+    console.error('SVG element not found');
+    return;
+  }
 
-  const serializer = new XMLSerializer();
-  let svgString = serializer.serializeToString(svgElement);
+  try {
+    const clonedSvg = inlineComputedStyles(svgElement);
 
-  svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    // Set proper xmlns
+    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(clonedSvg);
+
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Error exporting SVG:', err);
+  }
 }
 
 export function exportPNG(svgRef, filename = 'calendar-of-performances.png') {
   const svgElement = svgRef.current;
-  if (!svgElement) return;
+  if (!svgElement) {
+    console.error('SVG element not found');
+    return;
+  }
 
-  const svgData = new XMLSerializer().serializeToString(svgElement);
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
+  try {
+    const clonedSvg = inlineComputedStyles(svgElement);
+    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
+    const width = parseInt(svgElement.getAttribute('width'));
+    const height = parseInt(svgElement.getAttribute('height'));
 
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.fillStyle = EXPORT_BUTTON_CONFIG.CANVAS_BACKGROUND;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
+    const serializer = new XMLSerializer();
+    const svgData = serializer.serializeToString(clonedSvg);
 
-    canvas.toBlob((blob) => {
-      const pngUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = pngUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(pngUrl);
-    });
-  };
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
 
-  img.src = url;
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      canvas.width = width;
+      canvas.height = height;
+      ctx.fillStyle = EXPORT_BUTTON_CONFIG.CANVAS_BACKGROUND;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((blob) => {
+        const pngUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = pngUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(pngUrl);
+      });
+    };
+
+    img.onerror = (err) => {
+      console.error('Error loading SVG for PNG export:', err);
+      URL.revokeObjectURL(url);
+    };
+
+    img.src = url;
+  } catch (err) {
+    console.error('Error exporting PNG:', err);
+  }
 }
