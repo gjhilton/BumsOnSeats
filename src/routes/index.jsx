@@ -1,10 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createRoute } from "@tanstack/react-router";
 import { Playbill } from "../components/Playbill/Playbill";
-import { useFontSource } from "../utils/useFontSource";
-
-export const Route = createFileRoute("/")({
-  component: Index,
-});
+import { useFontSource } from "../hooks/useFontSource";
+import { Route as rootRoute } from "./__root";
 
 function Index() {
   let fontSource = useFontSource();
@@ -12,3 +9,9 @@ function Index() {
 
   return <Playbill fontSource={fontSource} />;
 }
+
+export const Route = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: Index,
+});

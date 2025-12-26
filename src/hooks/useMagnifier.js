@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import * as d3 from "d3";
 import { token } from "@generated/tokens";
 
@@ -35,11 +35,25 @@ export function useMagnifier({
   visibleTheatres
 }) {
   const magnifierRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
 
   const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
 
+  // Track window resize to update mobile state
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     if (!svgRef.current || !renderMagnifiedContent) return;
+
+    // Disable magnifier on mobile devices (768px or smaller)
+    if (isMobile) return;
 
     const svg = d3.select(svgRef.current);
 
@@ -142,7 +156,7 @@ export function useMagnifier({
       svgNode.removeEventListener("touchcancel", handleTouchEnd);
       magnifier.remove();
     };
-  }, [svgRef, renderMagnifiedContent, finalConfig, data, width, height, visibleTheatres]);
+  }, [svgRef, renderMagnifiedContent, finalConfig, data, width, height, visibleTheatres, isMobile]);
 
   return magnifierRef;
 }

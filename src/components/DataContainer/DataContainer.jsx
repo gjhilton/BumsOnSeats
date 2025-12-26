@@ -1,19 +1,23 @@
 import { useState, useEffect } from "react";
 import { css } from "@generated/css";
+import { LoadingSpinner } from "@components/LoadingSpinner/LoadingSpinner";
+import { PageWidth } from "@components/PageLayout/PageLayout";
 
 const MessagePage = ({ title, titleColor, children }) => (
-  <div className={css({ padding: "xl", minHeight: "100vh" })}>
-    <h1 className={css({ fontSize: "xl", mb: "lg", color: titleColor })}>
-      {title}
-    </h1>
-    {children}
-  </div>
+  <PageWidth>
+    <div className={css({ padding: "xl", minHeight: "100vh" })}>
+      <h1 className={css({ fontSize: "xl", mb: "lg", color: titleColor })}>
+        {title}
+      </h1>
+      {children}
+    </div>
+  </PageWidth>
 );
 
-const LoadingComponent = () => <MessagePage title="Loading..." />;
+const LoadingComponent = () => <LoadingSpinner />;
 
 const ErrorComponent = ({ message }) => (
-  <MessagePage title="Error loading data" titleColor="accent">
+  <MessagePage title="Error loading data" titleColor="error">
     <p>{message}</p>
   </MessagePage>
 );
@@ -30,7 +34,8 @@ export function DataContainer({ loadData, children }) {
       .then(setData)
       .catch(setError)
       .finally(() => setLoading(false));
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return <LoadingComponent />;

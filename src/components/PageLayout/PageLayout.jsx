@@ -2,92 +2,82 @@ import { Link } from "@tanstack/react-router";
 import { css } from "@generated/css";
 import { html as footerHtml } from "@content/site/footer.md";
 
-const PageTitle = ({ children }) => {
-  return (
-    <h1
+const PageTitle = ({ children }) => (
+  <h1
+    className={css({
+      fontSize: "2xl",
+      mb: "lg",
+      fontWeight: "normal",
+      lineHeight: "1.1",
+      marginTop: "xl",
+    })}
+  >
+    {children}
+  </h1>
+);
+
+const Header = () => (
+  <header>
+    <Link
+      to="/"
       className={css({
-        fontSize: "2xl",
-        mb: "lg",
-        fontWeight: "normal",
-        lineHeight: "1.1",
-        marginTop: "xl",
+        textDecoration: "none !important",
+        fontSize: "xl",
+        display: "inline-block",
+        paddingBottom: "1px",
+        borderBottom: "2px solid",
+        borderColor: "ink",
+        _hover: {
+          textDecoration: "none !important"
+        }
       })}
     >
-      {children}
-    </h1>
-  );
-};
+      ← Home
+    </Link>
+  </header>
+);
 
-const Header = () => {
-  return (
-    <header>
-      <Link
-        to="/"
-        className={css({
-          textDecoration: "none !important",
-          fontSize: "xl",
-          _hover: {
-            textDecoration: "underline !important"
-          }
-        })}
-      >
-        ← Home
-      </Link>
-    </header>
-  );
-};
+const Footer = () => (
+  <footer
+    className={css({
+      fontSize: "md",
+      lineHeight: "1.6",
+      borderTopWidth: "1px",
+      borderTopStyle: "solid",
+      borderTopColor: "ink",
+      paddingTop: "xl",
+    })}
+    dangerouslySetInnerHTML={{ __html: footerHtml }}
+  />
+);
 
-const Footer = () => {
-  return (
-    <footer
-      className={css({
-        fontSize: "md",
-        lineHeight: "1.6",
-        borderTopWidth: "1px",
-        borderTopStyle: "solid",
-        borderTopColor: "ink",
-        paddingTop: "xl",
-      })}
-      dangerouslySetInnerHTML={{ __html: footerHtml }}
-    />
-  );
-};
-
-const PageContent = ({ html }) => {
-  return (
-    <PageWidth>
-      <div
-        className={css({
-          "& p": {
-            fontSize: "lg",
-            mb: "xl",
-            lineHeight: "1.5",
-            maxWidth: "800px"
-          },
-          "& p:first-child": {
-            fontSize: "xl"
-          }
-        })}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </PageWidth>
-  );
-};
-
-export const PageWidth = ({ children }) => {
-  return (
+const PageContent = ({ html }) => (
     <div
       className={css({
-        paddingTop: "xl",
-        paddingBottom: "xl",
-        paddingLeft: "2xl",
-        paddingRight: "2xl"
+        "& p": {
+          fontSize: "lg",
+          mb: "xl",
+          lineHeight: "1.5",
+          maxWidth: "800px"
+        },
+        "& p:first-child": {
+          fontSize: "xl"
+        }
       })}
-    >
-      {children}
-    </div>
-  );
-};
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+);
+
+export const PageWidth = ({ children }) => (
+  <div
+    className={css({
+      paddingLeft: "2xl",
+      paddingRight: "2xl"
+    })}
+  >
+    {children}
+  </div>
+);
 
 export { PageContent };
 
@@ -97,10 +87,7 @@ export const PageLayout = ({ title, children }) => {
       <PageWidth>
         <Header />
         <PageTitle>{title}</PageTitle>
-      </PageWidth>
       {children}
-
-      <PageWidth>
         <Footer />
       </PageWidth>
     </div>

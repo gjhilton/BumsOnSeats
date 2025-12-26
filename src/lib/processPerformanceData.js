@@ -15,6 +15,9 @@ export function processPerformanceData(rows) {
     const pence = parseInt(String(row.Pence).trim()) || 0;
     const currencyValue = (pounds * 240) + (shillings * 12) + pence;
 
+    const portionOfCapacity = parseFloat(row['Portion of Capacity']);
+    const capacity = !isNaN(portionOfCapacity) ? portionOfCapacity : null;
+
     return {
       date,
       year,
@@ -26,6 +29,7 @@ export function processPerformanceData(rows) {
       isBenefit: row['Is Benefit'] === 'Yes',
       isCommand: row['Is Command'] === 'Yes',
       isRequest: row['Is Request'] === 'Yes',
+      capacity,
     };
   });
 }
