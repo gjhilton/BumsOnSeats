@@ -37,7 +37,7 @@ export function Tools({ visibleTheatres, toggleTheatre, svgRef, containerRef }) 
         gap: "md",
         marginRight: `${CHART_MARGINS.right}px`
       })}>
-        <Button onClick={() => exportSVG(svgRef)}>
+        <Button onClick={() => exportSVG(svgRef, containerRef)}>
           Export SVG
         </Button>
         <Button onClick={() => exportPNG(svgRef, containerRef)}>

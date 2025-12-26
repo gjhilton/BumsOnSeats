@@ -210,19 +210,128 @@ function inlineComputedStyles(svgElement) {
   return cloned;
 }
 
-export async function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
+export async function exportSVG(svgRef, containerRef, filename = 'calendar-of-performances.svg') {
   const svgElement = svgRef.current;
+  const container = containerRef.current;
+
   if (!svgElement) {
     console.error('SVG element not found');
     return;
   }
 
   try {
-    const clonedSvg = inlineComputedStyles(svgElement);
-    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    // Clone the main SVG and inline its styles
+    const clonedMainSvg = inlineComputedStyles(svgElement);
+
+    const svgWidth = parseFloat(svgElement.getAttribute('width'));
+    const svgHeight = parseFloat(svgElement.getAttribute('height'));
+
+    // Find all legend SVG elements and their labels
+    const allSvgs = Array.from(container.querySelectorAll('svg'));
+    const legendSvgs = allSvgs.filter(svg => svg !== svgElement);
+
+    // Get the label text for each legend SVG
+    const legendItems = legendSvgs.map(svg => {
+      const parentDiv = svg.parentElement;
+      const labelSpan = parentDiv.querySelector('span');
+      return {
+        svg: svg,
+        label: labelSpan ? labelSpan.textContent : '',
+        labelElement: labelSpan
+      };
+    });
+
+    // Get computed font styles from existing legend elements
+    let legendFontFamily = 'serif';
+    let legendTitleFontFamily = 'serif';
+    if (legendItems.length > 0 && legendItems[0].labelElement) {
+      const computedStyle = window.getComputedStyle(legendItems[0].labelElement);
+      legendFontFamily = computedStyle.fontFamily;
+    }
+    const legendTitleElement = container.querySelector('div > div > span');
+    if (legendTitleElement) {
+      const computedStyle = window.getComputedStyle(legendTitleElement);
+      legendTitleFontFamily = computedStyle.fontFamily;
+    }
+
+    // Create a new combined SVG
+    const combinedSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    combinedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+    // Calculate combined height
+    const legendSpacing = 80;
+    const legendHeight = 100;
+    const combinedHeight = svgHeight + legendSpacing + legendHeight;
+
+    combinedSvg.setAttribute('width', svgWidth);
+    combinedSvg.setAttribute('height', combinedHeight);
+
+    // Add background rect that covers entire combined SVG
+    const backgroundRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    backgroundRect.setAttribute('width', svgWidth);
+    backgroundRect.setAttribute('height', combinedHeight);
+    backgroundRect.setAttribute('fill', 'rgb(0, 0, 0)');
+    combinedSvg.appendChild(backgroundRect);
+
+    // Add main visualization content (skip the first background rect from original)
+    const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    Array.from(clonedMainSvg.children).forEach((child, index) => {
+      // Skip the first rect (background) as we've added our own
+      if (index === 0 && child.tagName === 'rect') return;
+      mainGroup.appendChild(child.cloneNode(true));
+    });
+    combinedSvg.appendChild(mainGroup);
+
+    // Add legend
+    if (legendItems.length > 0) {
+      const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      legendGroup.setAttribute('transform', `translate(60, ${svgHeight + legendSpacing})`);
+
+      // Add "Box office receipts:" text
+      const legendTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      legendTitle.setAttribute('x', '0');
+      legendTitle.setAttribute('y', '0');
+      legendTitle.setAttribute('fill', 'rgb(255, 255, 255)');
+      legendTitle.setAttribute('font-size', '14px');
+      legendTitle.setAttribute('font-weight', '600');
+      legendTitle.style.setProperty('font-family', legendTitleFontFamily);
+      legendTitle.textContent = 'Box office receipts:';
+      legendGroup.appendChild(legendTitle);
+
+      // Add legend items
+      let xOffset = 0;
+
+      legendItems.forEach((item) => {
+        const svg = item.svg;
+        const clonedLegendSvg = inlineComputedStyles(svg);
+        const svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        svgGroup.setAttribute('transform', `translate(${xOffset}, 25)`);
+
+        // Add the SVG content
+        Array.from(clonedLegendSvg.children).forEach(child => {
+          svgGroup.appendChild(child.cloneNode(true));
+        });
+
+        // Add label text
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', parseFloat(svg.getAttribute('width')) / 2);
+        label.setAttribute('y', parseFloat(svg.getAttribute('height')) + 20);
+        label.setAttribute('fill', 'rgb(255, 255, 255)');
+        label.setAttribute('font-size', '14px');
+        label.setAttribute('text-anchor', 'middle');
+        label.style.setProperty('font-family', legendFontFamily);
+        label.textContent = item.label;
+        svgGroup.appendChild(label);
+
+        legendGroup.appendChild(svgGroup);
+        xOffset += parseFloat(svg.getAttribute('width')) + 40;
+      });
+
+      combinedSvg.appendChild(legendGroup);
+    }
 
     const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(clonedSvg);
+    const svgString = serializer.serializeToString(combinedSvg);
 
     const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -297,9 +406,18 @@ export async function exportPNG(svgRef, containerRef, filename = 'calendar-of-pe
     combinedSvg.setAttribute('width', svgWidth);
     combinedSvg.setAttribute('height', combinedHeight);
 
-    // Add main visualization content
+    // Add background rect that covers entire combined SVG
+    const backgroundRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    backgroundRect.setAttribute('width', svgWidth);
+    backgroundRect.setAttribute('height', combinedHeight);
+    backgroundRect.setAttribute('fill', 'rgb(0, 0, 0)');
+    combinedSvg.appendChild(backgroundRect);
+
+    // Add main visualization content (skip the first background rect from original)
     const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    Array.from(clonedMainSvg.children).forEach(child => {
+    Array.from(clonedMainSvg.children).forEach((child, index) => {
+      // Skip the first rect (background) as we've added our own
+      if (index === 0 && child.tagName === 'rect') return;
       mainGroup.appendChild(child.cloneNode(true));
     });
     combinedSvg.appendChild(mainGroup);
@@ -364,8 +482,6 @@ export async function exportPNG(svgRef, containerRef, filename = 'calendar-of-pe
       canvas.height = combinedHeight * 2;
       const ctx = canvas.getContext('2d');
 
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       URL.revokeObjectURL(url);
