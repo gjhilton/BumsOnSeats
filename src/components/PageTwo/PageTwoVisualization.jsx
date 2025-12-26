@@ -404,7 +404,7 @@ const renderCoventBoxPlots = (g, data, xScale, yScale, centerX) => {
 };
 
 
-export const YearByYearVisualization = ({ data }) => {
+export const PageTwoVisualization = ({ data }) => {
   const svgRefCount = useRef(null);
   const svgRefRevenue = useRef(null);
   const svgRefBoxPlot = useRef(null);

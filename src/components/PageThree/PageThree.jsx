@@ -1,13 +1,14 @@
 import { PageLayout, PageContent } from "@components/PageLayout";
-import { YearByYearVisualization } from "./YearByYearVisualization";
+import { PageThreeVisualization } from "./PageThreeVisualization";
 import { ChartErrorBoundary } from "@components/ChartErrorBoundary/ChartErrorBoundary";
+import { PAGE_TITLES } from "@/constants/pageTitles";
 
-export const YearByYearPage = ({ contentHtml, data }) => {
+export const PageThree = ({ contentHtml, data }) => {
   return (
-    <PageLayout title={<><b>Year by Year</b> Analysis (1732-1809)</>}>
+    <PageLayout title={PAGE_TITLES.PAGE_THREE.full()}>
       <PageContent html={contentHtml} />
       <ChartErrorBoundary>
-        <YearByYearVisualization data={data} />
+        <PageThreeVisualization data={data} />
       </ChartErrorBoundary>
     </PageLayout>
   );

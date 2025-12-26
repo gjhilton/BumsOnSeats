@@ -39,7 +39,7 @@ import {
   getDayWidth
 } from "./utils";
 
-export function CalendarOfPerformances({ data }) {
+export function PageOneVisualization({ data }) {
   const svgRef = useRef();
   const containerRef = useRef();
   const tooltipRef = useRef();

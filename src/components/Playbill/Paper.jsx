@@ -7,7 +7,7 @@ export const Paper = ({ children }) => (
       containerType: "inline-size",
       width: "80%",
       maxWidth: "800px",
-      aspectRatio: "1 / 1.5",
+      minHeight: "600px",
       margin: "2rem auto",
       bg: "#e8dcc8",
       borderRadius: "3px 5px 4px 6px",

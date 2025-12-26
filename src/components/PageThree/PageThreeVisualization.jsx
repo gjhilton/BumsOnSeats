@@ -495,7 +495,7 @@ const renderPerformanceChart = (svgRef, performanceData, width) => {
     .text("Ordinary");
 };
 
-export const CapacityRevenueVisualization = ({ data }) => {
+export const PageThreeVisualization = ({ data }) => {
   const svgRefCapacity = useRef(null);
   const svgRefRevenue = useRef(null);
   const svgRefPerformances = useRef(null);

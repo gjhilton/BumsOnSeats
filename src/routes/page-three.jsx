@@ -1,9 +1,9 @@
 import { createRoute } from "@tanstack/react-router";
-import { CapacityRevenueDataContainer } from "@components/CapacityRevenue";
+import { PageThreeDataContainer } from "@components/PageThree";
 import { Route as rootRoute } from "./__root";
 
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/capacity-revenue",
-  component: CapacityRevenueDataContainer,
+  path: "/page-three",
+  component: PageThreeDataContainer,
 });

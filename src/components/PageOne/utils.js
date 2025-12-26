@@ -210,7 +210,7 @@ function inlineComputedStyles(svgElement) {
   return cloned;
 }
 
-export async function exportSVG(svgRef, containerRef, filename = 'calendar-of-performances.svg') {
+export async function exportSVG(svgRef, containerRef, filename = 'page-one.svg') {
   const svgElement = svgRef.current;
   const container = containerRef.current;
 
@@ -347,7 +347,7 @@ export async function exportSVG(svgRef, containerRef, filename = 'calendar-of-pe
   }
 }
 
-export async function exportPNG(svgRef, containerRef, filename = 'calendar-of-performances.png') {
+export async function exportPNG(svgRef, containerRef, filename = 'page-one.png') {
   const svgElement = svgRef.current;
   const container = containerRef.current;
 

@@ -15,9 +15,9 @@ export const Act = ({ children, title, link, number }) => {
       className={css({
         fontWeight: "500",
         fontSize: "3.2cqw",
-        display: "inline-block",
+        display: "block",
         lineHeight: "1",
-        padding: " 0",
+        padding: "1.5em 0",
         wordSpacing: "0.3em",
       })}
     >

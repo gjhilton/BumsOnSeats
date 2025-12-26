@@ -1,13 +1,14 @@
 import { PageLayout, PageContent } from "@components/PageLayout";
-import { CapacityRevenueVisualization } from "./CapacityRevenueVisualization";
+import { PageTwoVisualization } from "./PageTwoVisualization";
 import { ChartErrorBoundary } from "@components/ChartErrorBoundary/ChartErrorBoundary";
+import { PAGE_TITLES } from "@/constants/pageTitles";
 
-export const CapacityRevenuePage = ({ contentHtml, data }) => {
+export const PageTwo = ({ contentHtml, data }) => {
   return (
-    <PageLayout title={<><b>Capacity vs Revenue</b></>}>
+    <PageLayout title={PAGE_TITLES.PAGE_TWO.full()}>
       <PageContent html={contentHtml} />
       <ChartErrorBoundary>
-        <CapacityRevenueVisualization data={data} />
+        <PageTwoVisualization data={data} />
       </ChartErrorBoundary>
     </PageLayout>
   );
