@@ -137,12 +137,12 @@ export function createHeightScale(maxValue, maxHeight) {
     .range([0, maxHeight]);
 }
 
-export function attachTooltipHandlers(selection, showTooltip, hideTooltip) {
+export function attachTooltipHandlers(selection, showTooltip, hideTooltip, isMobile = false) {
   return selection
     .on('mouseenter', showTooltip)
     .on('mousemove', showTooltip)
     .on('mouseleave', hideTooltip)
-    .style('cursor', 'zoom-in');
+    .style('cursor', isMobile ? 'default' : 'zoom-in');
 }
 
 export function calculateBarHeight(currencyValue, heightScale) {

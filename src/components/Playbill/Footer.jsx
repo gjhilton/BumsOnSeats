@@ -4,8 +4,8 @@ import { Bodycopy, Italic } from "./Typography";
 export const Footer = () => (
   <div
     className={css({
-      marginTop: "3em",
-      padding: "3em 6em 2em 6em",
+      marginTop: "1em",
+      padding: "2em 6em 2em 6em",
       fontSize: "2cqw",
       textAlign: "justify",
     })}

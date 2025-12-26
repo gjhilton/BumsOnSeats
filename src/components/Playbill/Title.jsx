@@ -15,7 +15,7 @@ export const Title = () => (
         display: "block",
         lineHeight: "0.75",
         padding: " 0",
-        margin: "0.4em 0 0",
+        margin: "1em 0 0",
         transform: "scaleY(1.1)",
       })}
     >

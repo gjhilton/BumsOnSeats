@@ -17,7 +17,7 @@ export const Act = ({ children, title, link, number }) => {
         fontSize: "3.2cqw",
         display: "block",
         lineHeight: "1",
-        padding: "1.5em 0",
+        padding: "1em 0",
         wordSpacing: "0.3em",
       })}
     >

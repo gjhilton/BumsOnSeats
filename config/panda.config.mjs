@@ -54,7 +54,7 @@ export default defineConfig({
                     md: { value: '1rem' },
                     lg: { value: '1.5rem' },
                     xl: { value: '2rem' },
-                    '2xl': { value: '5rem' },
+                    '2xl': { value: '3rem' },
                 },
             },
         },

@@ -56,6 +56,16 @@ export function PageOneVisualization({ data }) {
     "Drury Lane": true,
     "Covent Garden": true
   });
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const colorScale = useMemo(() => createColorScale(), []);
 
@@ -399,7 +409,7 @@ export function PageOneVisualization({ data }) {
       .attr('opacity', PERFORMANCE_CONFIG.OPACITY)
       .style('mix-blend-mode', PERFORMANCE_CONFIG.BLEND_MODE);
 
-    attachTooltipHandlers(bars, showTooltip, hideTooltip);
+    attachTooltipHandlers(bars, showTooltip, hideTooltip, isMobile);
 
     // Render stub marks for performances without receipt data
     const noDataMarkers = g.selectAll('.performance-no-data')
@@ -418,7 +428,7 @@ export function PageOneVisualization({ data }) {
       .attr('opacity', d => d.stubOpacity)
       .style('mix-blend-mode', PERFORMANCE_CONFIG.BLEND_MODE);
 
-    attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip);
+    attachTooltipHandlers(noDataMarkers, showTooltip, hideTooltip, isMobile);
 
     // Ensure magnifier is always last (on top) in the DOM
     const magnifierGroup = svg.select(".magnifier");
@@ -434,7 +444,7 @@ export function PageOneVisualization({ data }) {
       }
     }
 
-  }, [processedData, width, height]);
+  }, [processedData, width, height, isMobile]);
 
   useChartRender(renderChart, [processedData, width], "Calendar Chart");
 

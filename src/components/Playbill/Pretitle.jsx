@@ -5,6 +5,7 @@ export const Pretitle = () => (
   <div
     className={css({
       display: "block",
+      marginTop: "0.5em"
     })}
   >
     <Bodycopy>
