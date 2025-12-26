@@ -438,6 +438,7 @@ export function CalendarOfPerformances({ data }) {
         visibleTheatres={visibleTheatres}
         toggleTheatre={toggleTheatre}
         svgRef={svgRef}
+        containerRef={containerRef}
       />
 
       <Legend legendHeightScale={legendHeightScale} visibleTheatres={visibleTheatres} width={width} data={data} />

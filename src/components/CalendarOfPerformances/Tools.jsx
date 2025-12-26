@@ -4,7 +4,7 @@ import { THEATRES, THEATRE_COLORS } from "@/constants/theatre";
 import { CHART_MARGINS, LAYOUT_CONFIG } from "./constants";
 import { exportSVG, exportPNG } from "./utils";
 
-export function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
+export function Tools({ visibleTheatres, toggleTheatre, svgRef, containerRef }) {
   return (
     <div className={css({
       display: "flex",
@@ -40,7 +40,7 @@ export function Tools({ visibleTheatres, toggleTheatre, svgRef }) {
         <Button onClick={() => exportSVG(svgRef)}>
           Export SVG
         </Button>
-        <Button onClick={() => exportPNG(svgRef)}>
+        <Button onClick={() => exportPNG(svgRef, containerRef)}>
           Export PNG
         </Button>
       </div>

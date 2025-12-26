@@ -202,7 +202,7 @@ function inlineComputedStyles(svgElement) {
     relevantProps.forEach(prop => {
       const value = computedStyle.getPropertyValue(prop);
       if (value && value !== 'none' && value !== 'normal') {
-        clonedEl.style[prop] = value;
+        clonedEl.style.setProperty(prop, value);
       }
     });
   });
@@ -210,7 +210,7 @@ function inlineComputedStyles(svgElement) {
   return cloned;
 }
 
-export function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
+export async function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
   const svgElement = svgRef.current;
   if (!svgElement) {
     console.error('SVG element not found');
@@ -219,8 +219,6 @@ export function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
 
   try {
     const clonedSvg = inlineComputedStyles(svgElement);
-
-    // Set proper xmlns
     clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
     const serializer = new XMLSerializer();
@@ -240,52 +238,152 @@ export function exportSVG(svgRef, filename = 'calendar-of-performances.svg') {
   }
 }
 
-export function exportPNG(svgRef, filename = 'calendar-of-performances.png') {
+export async function exportPNG(svgRef, containerRef, filename = 'calendar-of-performances.png') {
   const svgElement = svgRef.current;
+  const container = containerRef.current;
+
   if (!svgElement) {
     console.error('SVG element not found');
     return;
   }
 
   try {
-    const clonedSvg = inlineComputedStyles(svgElement);
-    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    // Clone the main SVG and inline its styles
+    const clonedMainSvg = inlineComputedStyles(svgElement);
 
-    const width = parseInt(svgElement.getAttribute('width'));
-    const height = parseInt(svgElement.getAttribute('height'));
+    const svgWidth = parseFloat(svgElement.getAttribute('width'));
+    const svgHeight = parseFloat(svgElement.getAttribute('height'));
+
+    // Find all legend SVG elements and their labels
+    // The legend is structured as divs containing svg + span pairs
+    const allSvgs = Array.from(container.querySelectorAll('svg'));
+    const legendSvgs = allSvgs.filter(svg => svg !== svgElement);
+
+    // Get the label text for each legend SVG
+    const legendItems = legendSvgs.map(svg => {
+      // Find the span sibling that contains the label
+      const parentDiv = svg.parentElement;
+      const labelSpan = parentDiv.querySelector('span');
+      return {
+        svg: svg,
+        label: labelSpan ? labelSpan.textContent : '',
+        labelElement: labelSpan
+      };
+    });
+
+    // Get computed font styles from existing legend elements
+    let legendFontFamily = 'serif';
+    let legendTitleFontFamily = 'serif';
+    if (legendItems.length > 0 && legendItems[0].labelElement) {
+      const computedStyle = window.getComputedStyle(legendItems[0].labelElement);
+      legendFontFamily = computedStyle.fontFamily;
+    }
+    // Find the legend title element to get its font
+    const legendTitleElement = container.querySelector('div > div > span');
+    if (legendTitleElement) {
+      const computedStyle = window.getComputedStyle(legendTitleElement);
+      legendTitleFontFamily = computedStyle.fontFamily;
+    }
+
+    // Create a new combined SVG
+    const combinedSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    combinedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+    // Calculate combined height (main svg + spacing + legend)
+    const legendSpacing = 80;
+    const legendHeight = 100;
+    const combinedHeight = svgHeight + legendSpacing + legendHeight;
+
+    combinedSvg.setAttribute('width', svgWidth);
+    combinedSvg.setAttribute('height', combinedHeight);
+
+    // Add main visualization content
+    const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    Array.from(clonedMainSvg.children).forEach(child => {
+      mainGroup.appendChild(child.cloneNode(true));
+    });
+    combinedSvg.appendChild(mainGroup);
+
+    // Add legend
+    if (legendItems.length > 0) {
+      const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      legendGroup.setAttribute('transform', `translate(60, ${svgHeight + legendSpacing})`);
+
+      // Add "Box office receipts:" text
+      const legendTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      legendTitle.setAttribute('x', '0');
+      legendTitle.setAttribute('y', '0');
+      legendTitle.setAttribute('fill', 'rgb(255, 255, 255)');
+      legendTitle.setAttribute('font-size', '14px');
+      legendTitle.setAttribute('font-weight', '600');
+      legendTitle.style.setProperty('font-family', legendTitleFontFamily);
+      legendTitle.textContent = 'Box office receipts:';
+      legendGroup.appendChild(legendTitle);
+
+      // Add legend items
+      let xOffset = 0;
+
+      legendItems.forEach((item) => {
+        const svg = item.svg;
+        const clonedLegendSvg = inlineComputedStyles(svg);
+        const svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        svgGroup.setAttribute('transform', `translate(${xOffset}, 25)`);
+
+        // Add the SVG content
+        Array.from(clonedLegendSvg.children).forEach(child => {
+          svgGroup.appendChild(child.cloneNode(true));
+        });
+
+        // Add label text
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', parseFloat(svg.getAttribute('width')) / 2);
+        label.setAttribute('y', parseFloat(svg.getAttribute('height')) + 20);
+        label.setAttribute('fill', 'rgb(255, 255, 255)');
+        label.setAttribute('font-size', '14px');
+        label.setAttribute('text-anchor', 'middle');
+        label.style.setProperty('font-family', legendFontFamily);
+        label.textContent = item.label;
+        svgGroup.appendChild(label);
+
+        legendGroup.appendChild(svgGroup);
+        xOffset += parseFloat(svg.getAttribute('width')) + 40;
+      });
+
+      combinedSvg.appendChild(legendGroup);
+    }
 
     const serializer = new XMLSerializer();
-    const svgData = serializer.serializeToString(clonedSvg);
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgString = serializer.serializeToString(combinedSvg);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
 
+    const img = new Image();
     img.onload = () => {
-      canvas.width = width;
-      canvas.height = height;
-      ctx.fillStyle = EXPORT_BUTTON_CONFIG.CANVAS_BACKGROUND;
+      const canvas = document.createElement('canvas');
+      canvas.width = svgWidth * 2;
+      canvas.height = combinedHeight * 2;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
       URL.revokeObjectURL(url);
 
       canvas.toBlob((blob) => {
-        const pngUrl = URL.createObjectURL(blob);
+        const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = pngUrl;
+        link.href = downloadUrl;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(pngUrl);
+        URL.revokeObjectURL(downloadUrl);
       });
     };
 
     img.onerror = (err) => {
-      console.error('Error loading SVG for PNG export:', err);
+      console.error('Error loading SVG image:', err);
       URL.revokeObjectURL(url);
     };
 
