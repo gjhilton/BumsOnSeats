@@ -38,7 +38,14 @@ const prepareScatterData = (data, cache) => {
 };
 
 const aggregateBoxPlotByDayOfWeek = (data, valueKey, cache) => {
-  const withData = data.filter((d) => {
+  // Filter out performances with BOTH zero revenue AND zero capacity (likely data errors/gaps)
+  const withCompleteData = data.filter((d) => {
+    const hasCapacity = d.capacity !== null && d.capacity !== undefined && d.capacity > 0;
+    const hasRevenue = d.currencyValue !== null && d.currencyValue !== undefined && d.currencyValue > 0;
+    return hasCapacity && hasRevenue;
+  });
+
+  const withData = withCompleteData.filter((d) => {
     if (valueKey === 'capacity') {
       return d.capacity !== null && d.capacity !== undefined && d.capacity > 0;
     } else if (valueKey === 'currencyValue') {
@@ -518,11 +525,17 @@ export const PageThreeVisualization = ({ data }) => {
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
+    const completeDataCount = data.filter(d => {
+      const hasCapacity = d.capacity !== null && d.capacity !== undefined && d.capacity > 0;
+      const hasRevenue = d.currencyValue !== null && d.currencyValue !== undefined && d.currencyValue > 0;
+      return hasCapacity && hasRevenue;
+    }).length;
+
     return {
       capacityBoxPlot: aggregateBoxPlotByDayOfWeek(data, 'capacity', dayOfWeekCache),
       revenueBoxPlot: aggregateBoxPlotByDayOfWeek(data, 'currencyValue', dayOfWeekCache),
       performanceCounts: aggregatePerformancesByDayOfWeek(data, dayOfWeekCache),
-      scatterDataCount: data.filter(d => d.capacity !== null && d.capacity !== undefined && d.capacity > 0).length,
+      completeDataCount: completeDataCount,
       totalCount: data.length
     };
   }, [data, dayOfWeekCache]);
@@ -557,13 +570,13 @@ export const PageThreeVisualization = ({ data }) => {
   useChartRender(renderRevenueChart, [processedData, width], "Revenue Chart");
   useChartRender(renderPerformancesChart, [processedData, width], "Performance Chart");
 
-  const scatterDataCount = processedData?.scatterDataCount || 0;
+  const completeDataCount = processedData?.completeDataCount || 0;
   const totalCount = processedData?.totalCount || 0;
 
   return (
     <div className={css({ width: "100%" })}>
         <p className={css({ fontSize: "lg", color: "ink", marginBottom: "md" })}>
-          Showing {scatterDataCount.toLocaleString()} performances with non-zero capacity data out of {totalCount.toLocaleString()} total performances.
+          Revenue and capacity charts show {completeDataCount.toLocaleString()} performances with recorded revenue and capacity. Performance types chart shows all {totalCount.toLocaleString()} performances.
         </p>
         <div ref={containerRef} className={css({ width: "100%" })}>
           <h2 className={css({ fontSize: "xl", mb: "lg", fontWeight: "normal" })}>
