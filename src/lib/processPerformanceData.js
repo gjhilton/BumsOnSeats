@@ -1,5 +1,6 @@
 export function processPerformanceData(rows) {
   return rows.map(row => {
+    const dateString = row.Date; // Store the original date string for accurate Julian/Gregorian conversion
     const date = new Date(row.Date);
     const year = date.getFullYear();
 
@@ -19,6 +20,7 @@ export function processPerformanceData(rows) {
     const capacity = !isNaN(portionOfCapacity) ? portionOfCapacity : null;
 
     return {
+      dateString, // Original date string for accurate Julian/Gregorian day-of-week calculation
       date,
       year,
       dayOfYear,

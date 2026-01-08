@@ -21,14 +21,10 @@ const Header = () => (
     <Link
       to="/"
       className={css({
-        textDecoration: "none !important",
+        textDecoration: "none",
         fontSize: "xl",
-        display: "inline-block",
-        paddingBottom: "1px",
-        borderBottom: "2px solid",
-        borderColor: "ink",
         _hover: {
-          textDecoration: "none !important"
+          textDecoration: "underline"
         }
       })}
     >
@@ -72,7 +68,8 @@ export const PageWidth = ({ children }) => (
   <div
     className={css({
       paddingLeft: "2xl",
-      paddingRight: "2xl"
+	  paddingRight: "2xl",
+	  background:"black"
     })}
   >
     {children}
@@ -83,13 +80,11 @@ export { PageContent };
 
 export const PageLayout = ({ title, children }) => {
   return (
-    <div>
       <PageWidth>
         <Header />
         <PageTitle>{title}</PageTitle>
       {children}
         <Footer />
       </PageWidth>
-    </div>
   );
 };

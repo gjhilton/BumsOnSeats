@@ -18,12 +18,13 @@ const CHART_CONFIG = {
 
 const DAY_ORDER = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const getOrComputeDayOfWeek = (date, cache) => {
-  const key = date.toISOString();
+const getOrComputeDayOfWeek = (performanceData, cache) => {
+  // Use dateString if available (accurate Julian/Gregorian), otherwise fall back to date object
+  const key = performanceData.dateString || performanceData.date.toISOString();
   if (cache.has(key)) {
     return cache.get(key);
   }
-  const dayOfWeek = getDayOfWeek(date);
+  const dayOfWeek = getDayOfWeek(performanceData.dateString || performanceData.date);
   cache.set(key, dayOfWeek);
   return dayOfWeek;
 };
@@ -32,7 +33,7 @@ const prepareScatterData = (data, cache) => {
   const withCapacity = data.filter((d) => d.capacity !== null && d.capacity !== undefined && d.capacity > 0);
   return withCapacity.map((d) => ({
     ...d,
-    dayOfWeek: getOrComputeDayOfWeek(d.date, cache),
+    dayOfWeek: getOrComputeDayOfWeek(d, cache),
   }));
 };
 
@@ -48,7 +49,7 @@ const aggregateBoxPlotByDayOfWeek = (data, valueKey, cache) => {
 
   const withDayOfWeek = withData.map((d) => ({
     ...d,
-    dayOfWeek: getOrComputeDayOfWeek(d.date, cache),
+    dayOfWeek: getOrComputeDayOfWeek(d, cache),
   }));
 
   const grouped = d3.group(withDayOfWeek, (d) => d.dayOfWeek);
@@ -88,7 +89,7 @@ const aggregateBoxPlotByDayOfWeek = (data, valueKey, cache) => {
 const aggregatePerformancesByDayOfWeek = (data, cache) => {
   const withDayOfWeek = data.map((d) => ({
     ...d,
-    dayOfWeek: getOrComputeDayOfWeek(d.date, cache),
+    dayOfWeek: getOrComputeDayOfWeek(d, cache),
   }));
 
   const grouped = d3.group(withDayOfWeek, (d) => d.dayOfWeek);
@@ -124,7 +125,7 @@ const aggregatePerformancesByDayOfWeek = (data, cache) => {
   });
 };
 
-const renderBoxPlot = (svgRef, boxPlotData, width, margins, yAxisLabel, yAxisFormat) => {
+const renderBoxPlot = (svgRef, boxPlotData, width, margins, yAxisLabel, yAxisFormat, yTickValues) => {
   const height = 600;
   const innerWidth = width - margins.left - margins.right;
   const innerHeight = height - margins.top - margins.bottom;
@@ -137,13 +138,16 @@ const renderBoxPlot = (svgRef, boxPlotData, width, margins, yAxisLabel, yAxisFor
     .append("g")
     .attr("transform", `translate(${margins.left},${margins.top})`);
 
+  // Only include days that have data (either Drury or Covent has performances)
+  const filteredBoxPlotData = boxPlotData.filter(d => d.drury || d.covent);
+
   const xScale = d3
     .scaleBand()
-    .domain(DAY_ORDER)
+    .domain(filteredBoxPlotData.map(d => d.dayOfWeek))
     .range([0, innerWidth])
     .padding(0.1);
 
-  const maxValue = d3.max(boxPlotData, (d) => {
+  const maxValue = d3.max(filteredBoxPlotData, (d) => {
     const druryMax = d.drury ? d.drury.max : 0;
     const coventMax = d.covent ? d.covent.max : 0;
     return Math.max(druryMax, coventMax);
@@ -158,7 +162,7 @@ const renderBoxPlot = (svgRef, boxPlotData, width, margins, yAxisLabel, yAxisFor
   const theatreOffset = 20;
   const boxWidth = 15;
 
-  boxPlotData.forEach((d) => {
+  filteredBoxPlotData.forEach((d) => {
     if (!d.drury) return;
     const centerX = xScale(d.dayOfWeek) + xScale.bandwidth() / 2 - theatreOffset;
 
@@ -187,7 +191,7 @@ const renderBoxPlot = (svgRef, boxPlotData, width, margins, yAxisLabel, yAxisFor
       .attr("stroke-width", 2);
   });
 
-  boxPlotData.forEach((d) => {
+  filteredBoxPlotData.forEach((d) => {
     if (!d.covent) return;
     const centerX = xScale(d.dayOfWeek) + xScale.bandwidth() / 2 + theatreOffset;
 
@@ -225,9 +229,13 @@ const renderBoxPlot = (svgRef, boxPlotData, width, margins, yAxisLabel, yAxisFor
     .style("font-size", CHART_CONFIG.AXIS_FONT_SIZE)
     .style("fill", token.var("colors.ink"));
 
-  const yAxis = yAxisFormat
+  let yAxis = yAxisFormat
     ? d3.axisLeft(yScale).tickFormat(yAxisFormat)
     : d3.axisLeft(yScale).tickFormat((d) => d + "%");
+
+  if (yTickValues) {
+    yAxis = yAxis.tickValues(yTickValues);
+  }
 
   g.append("g")
     .attr("class", "y-axis")
@@ -293,13 +301,16 @@ const renderPerformanceChart = (svgRef, performanceData, width) => {
     .append("g")
     .attr("transform", `translate(${CHART_CONFIG.MARGINS_PERFORMANCE.left},${CHART_CONFIG.MARGINS_PERFORMANCE.top})`);
 
+  // Only include days that have performances (either Drury or Covent)
+  const filteredPerformanceData = performanceData.filter(d => d.drury.total > 0 || d.covent.total > 0);
+
   const xScale = d3
     .scaleBand()
-    .domain(DAY_ORDER)
+    .domain(filteredPerformanceData.map(d => d.dayOfWeek))
     .range([0, innerWidth])
     .padding(0.1);
 
-  const maxCount = d3.max(performanceData, (d) => Math.max(d.drury.total, d.covent.total)) || 100;
+  const maxCount = d3.max(filteredPerformanceData, (d) => Math.max(d.drury.total, d.covent.total)) || 100;
   const yScale = d3
     .scaleLinear()
     .domain([0, maxCount])
@@ -317,7 +328,7 @@ const renderPerformanceChart = (svgRef, performanceData, width) => {
   const coventBenefit = createTheatreTint('COVENT', 0.5);
   const coventCommand = createTheatreTint('COVENT', 0.75);
 
-  performanceData.forEach((d) => {
+  filteredPerformanceData.forEach((d) => {
     const centerX = xScale(d.dayOfWeek) + xScale.bandwidth() / 2 - theatreOffset;
 
     g.append("rect")
@@ -342,7 +353,7 @@ const renderPerformanceChart = (svgRef, performanceData, width) => {
       .attr("fill", druryCommand);
   });
 
-  performanceData.forEach((d) => {
+  filteredPerformanceData.forEach((d) => {
     const centerX = xScale(d.dayOfWeek) + xScale.bandwidth() / 2 + theatreOffset;
 
     g.append("rect")
@@ -533,8 +544,8 @@ export const PageThreeVisualization = ({ data }) => {
     const poundTicks = d3.range(0, maxPounds + 100, 100);
     const penceTicks = poundTicks.map(p => p * 240);
 
-    const yAxisFormat = d3.axisLeft().tickValues(penceTicks).tickFormat((d) => "£" + Math.round(d / 240));
-    renderBoxPlot(svgRefRevenue, boxPlotData, width, CHART_CONFIG.MARGINS, "Revenue (£)", yAxisFormat.tickFormat());
+    const yAxisFormat = (d) => "£" + Math.round(d / 240);
+    renderBoxPlot(svgRefRevenue, boxPlotData, width, CHART_CONFIG.MARGINS, "Revenue (£)", yAxisFormat, penceTicks);
   }, [processedData, width]);
 
   const renderPerformancesChart = useCallback(() => {
