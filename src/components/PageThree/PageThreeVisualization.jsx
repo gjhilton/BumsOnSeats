@@ -19,7 +19,12 @@ const CHART_CONFIG = {
 const DAY_ORDER = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const getOrComputeDayOfWeek = (performanceData, cache) => {
-  // Use dateString if available (accurate Julian/Gregorian), otherwise fall back to date object
+  // CRITICAL: We must pass the ISO date string (not a Date object) to getDayOfWeek() for accurate
+  // Julian/Gregorian calendar conversion. JavaScript Date objects are ALWAYS Gregorian, so passing
+  // them to @tubular/time causes incorrect day-of-week calculations for dates before Britain's
+  // calendar switch on September 14, 1752. By passing the ISO string directly, @tubular/time can
+  // properly interpret dates as Julian before the switchover. This fix eliminated erroneous Sunday
+  // performances (theaters didn't perform on Sundays due to religious restrictions).
   const key = performanceData.dateString || performanceData.date.toISOString();
   if (cache.has(key)) {
     return cache.get(key);
